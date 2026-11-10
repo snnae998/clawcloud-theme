@@ -75,11 +75,11 @@ export function NodeTable({
       <table className="w-full min-w-[760px] border-collapse text-sm">
         <thead>
           {/* Headers are centred over their columns, and never wrap: the
-              country column holds only a flag, so without nowrap its two
-              characters stacked into 国 / 家. */}
+              region column holds only a flag, so without nowrap its two
+              characters stacked into 地 / 区. */}
           <tr className="border-b bg-muted/50 text-center text-xs whitespace-nowrap text-muted-foreground">
             <th className="px-3 py-2 font-medium">名称</th>
-            <th className="px-3 py-2 font-medium">国家</th>
+            <th className="px-3 py-2 font-medium">地区</th>
             <th className="px-3 py-2 font-medium">状态</th>
             {quality !== undefined && <th className="px-3 py-2 font-medium">网络质量</th>}
             {COLS.map((col) => (
