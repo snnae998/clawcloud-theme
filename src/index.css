@@ -73,6 +73,14 @@
   --q-warn-ink: oklch(0.49 0.06 70);
   --q-bad-ink: oklch(0.51 0.09 30);
   --q-timeout-ink: oklch(0.45 0 0);
+  /* 五档信号色：Gongsc/Theme-Glassmorphism 的 pingColor 色阶（MIT），给延迟
+     sparkline 行用——绿→亮绿→柠檬→黄→玫红，五档才能把 150ms 和 170ms 读成
+     两种颜色。浅色主题取原仓库的亮色值。 */
+  --signal-1: #059669;
+  --signal-2: #4ade80;
+  --signal-3: #a3e635;
+  --signal-4: #facc15;
+  --signal-5: #f43f5e;
 }
 
 .dark {
@@ -121,6 +129,12 @@
   --q-warn-ink: var(--q-warn);
   --q-bad-ink: oklch(0.66 0.09 30);
   --q-timeout-ink: oklch(0.62 0 0);
+  /* 五档信号色（深色主题值，同上取原仓库的暗色值）。 */
+  --signal-1: #10b981;
+  --signal-2: #4ade80;
+  --signal-3: #a3e635;
+  --signal-4: #fde047;
+  --signal-5: #fb7185;
 }
 
 @theme inline {

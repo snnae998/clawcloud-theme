@@ -89,6 +89,24 @@ export function groupByProbe(slice: QualitySlice): ProbeSeries[] {
 export type Quality = "good" | "warn" | "bad" | "timeout"
 
 /**
+ * Five-step signal colour, ported from Gongsc/Theme-Glassmorphism's
+ * `pingColor` (MIT): the value's tier is the first threshold it fits under,
+ * so the boundaries read as the table below. `null` (no data) falls back to
+ * the muted foreground rather than a tier. The sparkline rows wear this scale
+ * instead of the four-tier `Quality` above — five steps is what lets 150ms
+ * and 170ms read as different colours the way the reference does.
+ *
+ * latency (ms): <=60 / <=100 / <=160 / <=200 / above -> signal 1..5
+ * loss (%):     <=1 / <=3 / <=6 / <=9 / above     -> signal 1..5
+ */
+export function pingColor(value: number | null, metric: "latency" | "loss"): string {
+  if (value === null) return "var(--muted-foreground)"
+  const thresholds = metric === "latency" ? [60, 100, 160, 200] : [1, 3, 6, 9]
+  const index = thresholds.findIndex((t) => value <= t)
+  return `var(--signal-${index < 0 ? 5 : index + 1})`
+}
+
+/**
  * Industry-standard default thresholds (RTT). A value below `good` is good, at
  * or below `warn` is warn, above is bad — so the boundaries land as the plan
  * describes them: 100ms is warn, 300ms is still warn, 301ms is bad. Knobs live

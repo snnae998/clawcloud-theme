@@ -12,6 +12,7 @@ import {
   latencyText,
   lossText,
   medianLatency,
+  pingColor,
   pointQuality,
   qualityReducer,
   qualityViewState,
@@ -385,3 +386,19 @@ await drain()
 assert.deepEqual(failEvents, [{ kind: "fail", message: "hub 503" }], "a rejected fetch becomes a fail event")
 
 console.log("质量分级与批量切片解析正确")
+
+// 五档信号色（Glassmorphism 的 pingColor 色阶）：值落在第一个不小于它的
+// 阈值那档；超过全部阈值是 signal-5；无数据回落到 muted 前景色。
+assert.equal(pingColor(50, "latency"), "var(--signal-1)", "50ms -> signal-1")
+assert.equal(pingColor(60, "latency"), "var(--signal-1)", "60ms is the signal-1 boundary")
+assert.equal(pingColor(61, "latency"), "var(--signal-2)", "61ms -> signal-2")
+assert.equal(pingColor(155, "latency"), "var(--signal-3)", "155ms -> signal-3")
+assert.equal(pingColor(169, "latency"), "var(--signal-4)", "169ms -> signal-4")
+assert.equal(pingColor(273, "latency"), "var(--signal-5)", "273ms -> signal-5")
+assert.equal(pingColor(0.5, "loss"), "var(--signal-1)", "0.5% loss -> signal-1")
+assert.equal(pingColor(5, "loss"), "var(--signal-3)", "5% loss -> signal-3")
+assert.equal(pingColor(23.3, "loss"), "var(--signal-5)", "23.3% loss -> signal-5")
+assert.equal(pingColor(null, "latency"), "var(--muted-foreground)", "no data -> muted")
+assert.equal(pingColor(null, "loss"), "var(--muted-foreground)", "no loss data -> muted")
+
+console.log("五档信号色正确")
