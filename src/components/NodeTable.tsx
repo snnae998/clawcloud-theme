@@ -4,14 +4,13 @@ import { Country, Status } from "@/components/NodeCard"
 import { QualitySlot } from "@/components/QualityBand"
 import type { Node } from "@/lib/api"
 import { bandsFor, type ProbeSeries } from "@/lib/quality"
-import { pair, rate, uptime } from "@/lib/format"
+import { pair, rate } from "@/lib/format"
 import { trafficFoot } from "@/lib/traffic"
 
 /** The columns after identity (name/country/status) — one source for header and cells. */
-type Metric = "uptime" | "cpu" | "mem" | "disk" | "traffic" | "speed"
+type Metric = "cpu" | "mem" | "disk" | "traffic" | "speed"
 
 const COLS: { key: Metric; label: string }[] = [
-  { key: "uptime", label: "在线时长" },
   { key: "cpu", label: "CPU" },
   { key: "mem", label: "内存" },
   { key: "disk", label: "硬盘" },
@@ -26,8 +25,6 @@ const Dash = () => <span className="text-muted-foreground">—</span>
 function MetricCell({ node, metric }: { node: Node; metric: Metric }): React.ReactNode {
   const m = node.metrics
   switch (metric) {
-    case "uptime":
-      return m ? <span className="tnum">{uptime(m.uptime)}</span> : <Dash />
     case "cpu":
       return m ? <span className="tnum">{m.cpu.toFixed(1)}%</span> : <Dash />
     case "mem":
@@ -75,7 +72,7 @@ export function NodeTable({
 }) {
   return (
     <div className="overflow-x-auto rounded-lg border">
-      <table className="w-full min-w-[860px] border-collapse text-sm">
+      <table className="w-full min-w-[760px] border-collapse text-sm">
         <thead>
           <tr className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
             <th className="px-3 py-2 font-medium">名称</th>
