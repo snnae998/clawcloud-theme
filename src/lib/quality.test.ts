@@ -8,6 +8,7 @@ import {
   classifyBucket,
   fetchQuality,
   filterProbes,
+  filterQuality,
   groupByProbe,
   isTimeout,
   latencyText,
@@ -440,3 +441,23 @@ assert.deepEqual(
 assert.deepEqual(filterProbes(three, "中国广电"), [], "没命中的运营商 -> 空")
 
 console.log("运营商筛选正确")
+
+// filterQuality：离线节点整条拿掉，在线节点保留；运营商筛选只作用于在线节点。
+const qmap: Map<number, ProbeSeries[]> = new Map([
+  [1, three],
+  [2, three],
+])
+assert.equal(filterQuality(null, new Set([1]), null), null, "null 原样透传")
+assert.equal(filterQuality(undefined, new Set([1]), null), undefined, "undefined 原样透传")
+const kept = filterQuality(qmap, new Set([1]), null)!
+assert.equal(kept.has(2), false, "离线节点整条拿掉")
+assert.equal(kept.get(1), three, "在线节点保留，没筛运营商时原样")
+const keptTel = filterQuality(qmap, new Set([1]), "中国电信")!
+assert.deepEqual(
+  keptTel.get(1)!.map((s) => s.name),
+  ["中国电信"],
+  "在线节点按运营商筛",
+)
+assert.equal(keptTel.has(2), false, "离线节点筛运营商时也拿掉")
+
+console.log("离线节点不显示延迟正确")

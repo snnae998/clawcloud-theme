@@ -102,6 +102,27 @@ export function filterProbes(series: ProbeSeries[], probe: string | null): Probe
 }
 
 /**
+ * The quality map the list views read: offline nodes are dropped, and the
+ * carrier filter applies to the rest. An offline node's last-known latency is
+ * history, not a reading — the card already says 离线, and the band beside it
+ * would pretend the node still answers. Null/undefined pass through untouched
+ * so the loading skeleton and the off state keep their meanings.
+ */
+export function filterQuality(
+  quality: Map<number, ProbeSeries[]> | null | undefined,
+  onlineIds: Set<number>,
+  probe: string | null,
+): Map<number, ProbeSeries[]> | null | undefined {
+  if (!quality) return quality
+  const m = new Map<number, ProbeSeries[]>()
+  for (const [id, series] of quality) {
+    if (!onlineIds.has(id)) continue
+    m.set(id, filterProbes(series, probe))
+  }
+  return m
+}
+
+/**
  * Color-only encoding would fail red-green colourblind users, who cannot
  * distinguish good from bad on the core signal. The band distinguishes
  * `good / warn / bad / timeout` not by hue alone but also by a lightness step

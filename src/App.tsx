@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Switch } from "@/components/ui/switch"
 import { api, useNodes, type Node } from "@/lib/api"
-import { bandsFor, filterProbes, qualityViewState, useQuality, type ProbeSeries } from "@/lib/quality"
+import { bandsFor, filterQuality, qualityViewState, useQuality } from "@/lib/quality"
 import { readProbe, saveProbe } from "@/lib/quality-probe"
 import { readQualityOn, saveQualityOn } from "@/lib/quality-toggle"
 import { readView, saveView, type View } from "@/lib/view"
@@ -288,11 +288,9 @@ export default function App() {
   // Filtered once here, so cards and the table cannot drift — and the map view,
   // which draws no band, is untouched.
   const filteredQuality = useMemo(() => {
-    if (!quality || !effectiveProbe) return quality
-    const m = new Map<number, ProbeSeries[]>()
-    for (const [id, series] of quality) m.set(id, filterProbes(series, effectiveProbe))
-    return m
-  }, [quality, effectiveProbe])
+    const onlineIds = new Set(sorted.filter((n) => n.online).map((n) => n.id))
+    return filterQuality(quality, onlineIds, effectiveProbe)
+  }, [quality, effectiveProbe, sorted])
 
   // `/node/{id}` is a page people bookmark and share, so the tab needs the node's
   // name. The site name rather than a fixed string, since the hub lets an operator
