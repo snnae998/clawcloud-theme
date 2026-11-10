@@ -255,12 +255,56 @@ export function bandsFor(
 }
 
 /**
- * Fetches the per-node batch quality summary from the hub. The hub returns the
- * same per-node shape `NodeDetail` already consumes, keyed by node id. The
- * response wraps every visible node; anonymous callers see only public nodes.
+ * Quality batch, fetched through the official theme contract instead of the
+ * batch `/nodes/quality` route. That route only exists on the theme author's
+ * hub fork (CarlJia/monitor); the upstream hub (monitor-probe/monitor) has
+ * no such route, so the toggle fetched a 405 and the band stayed blank.
+ *
+ * The official contract serves ping data per node:
+ * `GET /api/nodes/{id}/metrics?series=ping` returns the same per-node shape
+ * the batch route returned ({ ping, probes, loss }) — NodeDetail already
+ * consumes it for its latency chart — so the fold below just assembles one
+ * slice per node into the same batch map the views read.
+ *
+ * One request per node instead of one for the fleet: with N nodes that is N
+ * history queries per poll. The hub serialises history queries behind one
+ * gate, so the fleet is walked with a small pool (QUALITY_CONCURRENCY) rather
+ * than fired all at once. A node whose request fails (offline, no ping data)
+ * is left out of the map, exactly as the batch route omits nodes with no ping
+ * records — `bandsFor` reads a missing id as an empty band.
  */
-export function fetchQuality(): Promise<QualityBatch> {
-  return api<QualityBatch>("/nodes/quality")
+
+/** Window the quality band draws: 1h at the hub's 60s buckets. */
+export const QUALITY_HOURS = 1
+export const QUALITY_POINTS = 60
+
+/** In-flight per-node metrics requests. */
+export const QUALITY_CONCURRENCY = 4
+
+/** One node's quality slice from the official per-node metrics endpoint. */
+export function fetchNodeQuality(id: number): Promise<QualitySlice> {
+  return api<QualitySlice>(`/nodes/${id}/metrics?hours=${QUALITY_HOURS}&points=${QUALITY_POINTS}&series=ping`)
+}
+
+/**
+ * Fetches the per-node quality batch for the given node ids. Nodes are
+ * walked with a bounded pool; a single node's failure never fails the batch.
+ */
+export async function fetchQuality(ids: number[]): Promise<QualityBatch> {
+  const batch: QualityBatch = {}
+  let next = 0
+  const workers = Array.from({ length: Math.min(QUALITY_CONCURRENCY, ids.length) }, async () => {
+    while (next < ids.length) {
+      const id = ids[next++]
+      try {
+        batch[String(id)] = await fetchNodeQuality(id)
+      } catch {
+        // Leave the node out; the band reads a missing id as empty.
+      }
+    }
+  })
+  await Promise.all(workers)
+  return batch
 }
 
 const REFRESH_MS = 60_000
@@ -353,26 +397,34 @@ export function startQualityPolling<H>(deps: QualityPollDeps<H>): () => void {
  * Tracks a toggle and polls quality data while it is open. The loop itself
  * lives in `startQualityPolling`; this hook only wires it to React state.
  *
- * Off derives the idle state rather than writing it back through an effect, so
- * the last frame survives a fast re-enable, and the effect's cleanup stops the
- * loop so a closed toggle never lets an in-flight response land.
+ * `idsKey` is the comma-joined ids of the nodes to fetch, passed as one
+ * string so the effect restarts only when the set actually changes — the
+ * node list itself is a new array on every 2s push, which would restart the
+ * poll each time. Off derives the idle state rather than writing it back
+ * through an effect, so the last frame survives a fast re-enable, and the
+ * effect's cleanup stops the loop so a closed toggle never lets an in-flight
+ * response land.
  */
-export function useQuality(enabled: boolean): QualityState {
+export function useQuality(enabled: boolean, idsKey: string): QualityState {
   const [state, setState] = useState<QualityState>(IDLE)
 
   useEffect(() => {
     if (!enabled) return
+    const ids = idsKey
+      .split(",")
+      .map((s) => Number(s))
+      .filter((n) => Number.isFinite(n))
     return startQualityPolling({
-      fetch: fetchQuality,
+      fetch: () => fetchQuality(ids),
       onEvent: (event) => setState((s) => qualityReducer(s, event)),
-      // 后台标签页跳过这一轮：这个接口在 hub 侧是一条跨节点扫描，与 agent 上报
-      // 争同一条写连接，一个被忘在后台的标签页不该每 60 秒占它一次。开关打开时
-      // 的首帧不走这里，所以「打开即拉一轮」的行为不受影响；回到前台后下一轮
+      // 后台标签页跳过这一轮：一轮是 N 个单节点查询，与 agent 上报争同一条
+      // 写连接，一个被忘在后台的标签页不该每 60 秒占它一次。开关打开时的
+      // 首帧不走这里，所以「打开即拉一轮」的行为不受影响；回到前台后下一轮
       // （≤60 秒）把数据补齐。
       schedule: (tick, ms) => setInterval(() => { if (!document.hidden) tick() }, ms),
       cancel: (handle) => clearInterval(handle),
     })
-  }, [enabled])
+  }, [enabled, idsKey])
 
   return enabled ? state : IDLE
 }

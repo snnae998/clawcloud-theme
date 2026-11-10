@@ -161,13 +161,6 @@ export default function App() {
     saveQualityOn(next)
     setQualityOn(next)
   }, [])
-  // The hook only fetches while the toggle is on, so off costs the hub nothing
-  // (R5). `data` is held across refreshes, so a slow poll never blanks the bands.
-  const qualityState = useQuality(qualityOn)
-  // One value, three meanings the band component reads directly; the derivation
-  // (and its "first fetch failed reads as empty" rule) lives in the lib so it
-  // has a test.
-  const quality = qualityViewState(qualityOn, qualityState)
 
   const loadMe = useCallback(() => {
     // `|| "..."` because an empty message reads as no error: api() falls back to
@@ -221,6 +214,18 @@ export default function App() {
     [sorted, country],
   )
   const selected = useMemo(() => sorted.find((n) => n.id === open), [sorted, open])
+
+  // The hook only fetches while the toggle is on, so off costs the hub nothing
+  // (R5). `data` is held across refreshes, so a slow poll never blanks the bands.
+  // Only the nodes on screen are fetched: the ids are joined into one string so
+  // the poll restarts only when the set actually changes — the node list is a
+  // new array on every 2s push, which would otherwise restart it each time.
+  const qualityIds = useMemo(() => visible.map((n) => n.id).join(","), [visible])
+  const qualityState = useQuality(qualityOn, qualityIds)
+  // One value, three meanings the band component reads directly; the derivation
+  // (and its "first fetch failed reads as empty" rule) lives in the lib so it
+  // has a test.
+  const quality = qualityViewState(qualityOn, qualityState)
 
   // `/node/{id}` is a page people bookmark and share, so the tab needs the node's
   // name. The site name rather than a fixed string, since the hub lets an operator

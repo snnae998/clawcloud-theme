@@ -75,9 +75,10 @@ npm run build && npm run package-theme
 |---|---|
 | `GET /api/me` | 站点名、登录状态、公开页开关 |
 | `GET /api/nodes` | 节点列表、实时指标和累计流量 |
-| `GET /api/nodes/{id}/metrics` | 历史指标和延迟记录 |
-| `GET /api/nodes/quality` | 全节点最近一小时的延迟/丢包带宽，按节点 id 给出；公开页开启时匿名可用 |
+| `GET /api/nodes/{id}/metrics` | 历史指标和延迟记录；网络质量开关按可见节点逐个拉 `series=ping`（1 小时、60 桶），拼成全站批次 |
 | `GET /api/ws` | 每 2 秒推送一次节点快照的 WebSocket |
+
+> 上游 hub 没有批量接口 `GET /api/nodes/quality`（只在作者的 hub fork 里有），所以网络质量不走批量接口，改走上面这条单节点接口。这是本 fork 与上游的唯一行为差别。
 
 `metrics` 的三个查询参数都可省：
 

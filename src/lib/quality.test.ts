@@ -258,18 +258,35 @@ const homeBands = bandsFor(ready!, 7)
 assert.ok(homeBands && homeBands.length === 2, "id present -> its series")
 assert.equal(homeBands![0].name, "home", "name preserved")
 
-// fetchQuality exists and calls the expected path (smoke check; no network).
+// fetchQuality walks the official per-node metrics endpoint instead of the
+// batch /nodes/quality route (which only exists on the author's hub fork):
+// one /nodes/{id}/metrics?series=ping per id, assembled into the same batch
+// map the views read. A node whose request fails is left out, never failing
+// the batch.
 const originalFetch = globalThis.fetch
-let called = ""
+const called: string[] = []
+const slices: Record<string, unknown> = {
+  "7": { ping: [{ task_id: 1, ts: 100, latency: 50 }], probes: { "1": "电信" }, loss: { "1": 0 } },
+  "9": { ping: [{ task_id: 1, ts: 100, latency: 80 }], probes: { "1": "电信" }, loss: { "1": 1 } },
+}
 globalThis.fetch = ((input: RequestInfo | URL) => {
-  called = String(input)
+  const url = String(input)
+  called.push(url)
+  const m = /\/api\/nodes\/(\d+)\/metrics/.exec(url)
+  const slice = m ? slices[m[1]] : undefined
+  if (!slice) return Promise.resolve(new Response("not found", { status: 404 }))
   return Promise.resolve(
-    new Response(JSON.stringify({}), { status: 200, headers: { "content-type": "application/json" } }),
+    new Response(JSON.stringify(slice), { status: 200, headers: { "content-type": "application/json" } }),
   )
 }) as typeof fetch
 try {
-  await fetchQuality()
-  assert.ok(called.endsWith("/api/nodes/quality"), `hits /nodes/quality, got ${called}`)
+  const batch = await fetchQuality([7, 8, 9])
+  assert.ok(
+    called.every((u) => /\/api\/nodes\/\d+\/metrics\?hours=1&points=60&series=ping$/.test(u)),
+    `each id hits its metrics endpoint with series=ping, got ${called.join(", ")}`,
+  )
+  assert.deepEqual(Object.keys(batch).sort(), ["7", "9"], "failing node 8 is left out, not fatal")
+  assert.equal(batch["7"].ping[0].latency, 50, "slice kept under its node id")
 } finally {
   globalThis.fetch = originalFetch
 }
