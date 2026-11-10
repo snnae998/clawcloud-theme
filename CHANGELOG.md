@@ -1,6 +1,6 @@
 # Changelog
 
-主题版本的可读变更记录。每个版本的 `theme.tar.gz` 见 [GitHub Releases](https://github.com/CarlJia/monitor-theme-gymin/releases)。
+主题版本的可读变更记录。每个版本的 `theme.tar.gz` 见 [GitHub Releases](https://github.com/snnae998/clawcloud-theme/releases)。
 
 ## [Unreleased]
 

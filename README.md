@@ -1,6 +1,6 @@
-# monitor-theme-gymin
+# clawcloud-theme
 
-[monitor](https://github.com/CarlJia/monitor) 的第三方主题（极敏·Gymin），基于内置状态面板丰富表现形式。
+[monitor](https://github.com/CarlJia/monitor) 的第三方主题（Clawcloud·星图），基于内置状态面板丰富表现形式。
 
 React + Vite + shadcn/ui，黑白配色。
 
@@ -106,7 +106,7 @@ npm run build && npm run package-theme
 ## 变更记录
 
 每个 tag 的改动汇总在 [CHANGELOG.md](CHANGELOG.md)，GitHub Release 页面同时
-附带 `theme.tar.gz` 与自动 notes：[releases](https://github.com/CarlJia/monitor-theme-gymin/releases)。
+附带 `theme.tar.gz` 与自动 notes：[releases](https://github.com/snnae998/clawcloud-theme/releases)。
 
 ## 许可
 

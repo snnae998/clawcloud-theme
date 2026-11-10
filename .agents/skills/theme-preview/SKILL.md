@@ -1,6 +1,6 @@
 ---
 name: theme-preview
-description: 生成/更新 monitor-theme-gymin 的 preview.png 宣传预览图。构建主题后起 mock hub、用 CDP 驱动 headless Chrome 截浅色+深色两版页面，再按黑画布对角线斜切合成。凡是用户要「生成/重做/更新 preview.png、预览图、宣传图、黑白双主题截图」，或主题 UI 改动后需要刷新预览图（哪怕没明说 preview 两个字），都用本 skill。
+description: 生成/更新 clawcloud-theme 的 preview.png 宣传预览图。构建主题后起 mock hub、用 CDP 驱动 headless Chrome 截浅色+深色两版页面，再按黑画布对角线斜切合成。凡是用户要「生成/重做/更新 preview.png、预览图、宣传图、黑白双主题截图」，或主题 UI 改动后需要刷新预览图（哪怕没明说 preview 两个字），都用本 skill。
 ---
 
 # theme-preview：生成主题预览图
