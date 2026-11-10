@@ -7,6 +7,7 @@ import {
   batchToSeries,
   classifyBucket,
   fetchQuality,
+  filterProbes,
   groupByProbe,
   isTimeout,
   latencyText,
@@ -423,3 +424,19 @@ assert.equal(pingColor(null, "latency"), "var(--muted-foreground)", "no data -> 
 assert.equal(pingColor(null, "loss"), "var(--muted-foreground)", "no loss data -> muted")
 
 console.log("五档信号色正确")
+
+// filterProbes：运营商筛选只留同名的那条；没选全留；没命中的节点一条不留。
+const three: ProbeSeries[] = [
+  { id: 1, name: "中国电信", points: [], loss: 0 },
+  { id: 2, name: "中国联通", points: [], loss: 0 },
+  { id: 3, name: "中国移动", points: [], loss: 0 },
+]
+assert.equal(filterProbes(three, null), three, "没选 -> 原样全留")
+assert.deepEqual(
+  filterProbes(three, "中国电信").map((s) => s.name),
+  ["中国电信"],
+  "只留中国电信",
+)
+assert.deepEqual(filterProbes(three, "中国广电"), [], "没命中的运营商 -> 空")
+
+console.log("运营商筛选正确")

@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Switch } from "@/components/ui/switch"
 import { api, useNodes, type Node } from "@/lib/api"
-import { bandsFor, qualityViewState, useQuality } from "@/lib/quality"
+import { bandsFor, filterProbes, qualityViewState, useQuality, type ProbeSeries } from "@/lib/quality"
+import { readProbe, saveProbe } from "@/lib/quality-probe"
 import { readQualityOn, saveQualityOn } from "@/lib/quality-toggle"
 import { readView, saveView, type View } from "@/lib/view"
 
@@ -110,6 +111,43 @@ function QualitySwitch({ on, onChange }: { on: boolean; onChange: (next: boolean
   )
 }
 
+/**
+ * Which carrier the quality band shows. Only rendered while the band is on —
+ * there is nothing to filter when it is off. The options are the probe names
+ * actually present in the loaded data, so a hub that names its probes
+ * differently still gets an exact list; the saved choice is kept in the list
+ * even before the data lands, so the control never shows a blank value.
+ */
+function ProbeFilter({
+  probe,
+  probes,
+  onChange,
+}: {
+  probe: string | null
+  probes: string[]
+  onChange: (next: string | null) => void
+}) {
+  const options = probe && !probes.includes(probe) ? [probe, ...probes] : probes
+  return (
+    <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+      运营商
+      <select
+        value={probe ?? ""}
+        onChange={(e) => onChange(e.target.value || null)}
+        aria-label="只显示指定运营商的探测"
+        className="rounded-md border border-input bg-background px-1.5 py-1 text-xs text-foreground"
+      >
+        <option value="">全部</option>
+        {options.map((name) => (
+          <option key={name} value={name}>
+            {name}
+          </option>
+        ))}
+      </select>
+    </label>
+  )
+}
+
 /** Loading placeholders keep each view's shape, so the switch never jumps. */
 function ViewSkeleton({ view }: { view: View }) {
   if (view === "cards")
@@ -160,6 +198,12 @@ export default function App() {
   const switchQuality = useCallback((next: boolean) => {
     saveQualityOn(next)
     setQualityOn(next)
+  }, [])
+
+  const [probe, setProbe] = useState(readProbe)
+  const switchProbe = useCallback((next: string | null) => {
+    saveProbe(next)
+    setProbe(next)
   }, [])
 
   const loadMe = useCallback(() => {
@@ -230,6 +274,25 @@ export default function App() {
   // (and its "first fetch failed reads as empty" rule) lives in the lib so it
   // has a test.
   const quality = qualityViewState(qualityOn, qualityState)
+
+  // The carrier names actually present in the loaded data, in first-seen order.
+  const probeNames = useMemo(() => {
+    if (!quality) return []
+    const names = new Set<string>()
+    for (const series of quality.values()) for (const s of series) names.add(s.name)
+    return [...names]
+  }, [quality])
+  // A saved choice that no longer exists (probes renamed, data not loaded yet)
+  // reads as "all" rather than blanking every band.
+  const effectiveProbe = probe && probeNames.includes(probe) ? probe : null
+  // Filtered once here, so cards and the table cannot drift — and the map view,
+  // which draws no band, is untouched.
+  const filteredQuality = useMemo(() => {
+    if (!quality || !effectiveProbe) return quality
+    const m = new Map<number, ProbeSeries[]>()
+    for (const [id, series] of quality) m.set(id, filterProbes(series, effectiveProbe))
+    return m
+  }, [quality, effectiveProbe])
 
   // `/node/{id}` is a page people bookmark and share, so the tab needs the node's
   // name. The site name rather than a fixed string, since the hub lets an operator
@@ -306,6 +369,7 @@ export default function App() {
                   数据时渲染 null）时，切换控件仍钉在右侧。 */}
               <div className="ml-auto flex items-center gap-2">
                 <QualitySwitch on={qualityOn} onChange={switchQuality} />
+                {qualityOn && <ProbeFilter probe={probe} probes={probeNames} onChange={switchProbe} />}
                 <ViewSwitch view={view} onChange={switchView} onWarm={warmView} />
               </div>
             </div>
@@ -318,7 +382,7 @@ export default function App() {
             ) : view === "table" ? (
               <ErrorBoundary>
                 <Suspense fallback={<ViewSkeleton view="table" />}>
-                  <NodeTable nodes={visible} onOpen={go} quality={quality} />
+                  <NodeTable nodes={visible} onOpen={go} quality={filteredQuality} />
                 </Suspense>
               </ErrorBoundary>
             ) : view === "map" ? (
@@ -334,7 +398,7 @@ export default function App() {
                     key={n.id}
                     node={n}
                     onOpen={() => go(n.id)}
-                    quality={bandsFor(quality, n.id)}
+                    quality={bandsFor(filteredQuality, n.id)}
                   />
                 ))}
               </div>

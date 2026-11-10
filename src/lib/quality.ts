@@ -92,6 +92,16 @@ export function groupByProbe(slice: QualitySlice): ProbeSeries[] {
 }
 
 /**
+ * Keeps only the named probe's series. Null keeps everything. A node with no
+ * matching probe keeps nothing — the filter means what it says, and the band
+ * renders empty for that node rather than silently showing another carrier.
+ */
+export function filterProbes(series: ProbeSeries[], probe: string | null): ProbeSeries[] {
+  if (!probe) return series
+  return series.filter((s) => s.name === probe)
+}
+
+/**
  * Color-only encoding would fail red-green colourblind users, who cannot
  * distinguish good from bad on the core signal. The band distinguishes
  * `good / warn / bad / timeout` not by hue alone but also by a lightness step
