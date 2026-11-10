@@ -74,7 +74,10 @@ export function NodeTable({
     <div className="overflow-x-auto rounded-lg border">
       <table className="w-full min-w-[760px] border-collapse text-sm">
         <thead>
-          <tr className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
+          {/* Headers are centred over their columns, and never wrap: the
+              country column holds only a flag, so without nowrap its two
+              characters stacked into 国 / 家. */}
+          <tr className="border-b bg-muted/50 text-center text-xs whitespace-nowrap text-muted-foreground">
             <th className="px-3 py-2 font-medium">名称</th>
             <th className="px-3 py-2 font-medium">国家</th>
             <th className="px-3 py-2 font-medium">状态</th>
