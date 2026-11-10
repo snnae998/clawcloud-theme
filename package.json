@@ -1,14 +1,14 @@
 {
   "name": "monitor-theme-gymin",
   "private": true,
-  "version": "2.1.8",
+  "version": "2.1.9",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "dev:mock": "node scripts/dev-mock.mjs",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "test": "node src/lib/format.test.ts && node src/lib/api.test.ts && node src/lib/view.test.ts && node src/lib/traffic.test.ts && node src/lib/geo.test.ts && node src/lib/flags.test.ts && node src/lib/map-aggregate.test.ts && node src/lib/quality.test.ts && node src/lib/sparkline.test.ts && node src/lib/quality-toggle.test.ts && node src/lib/quality-probe.test.ts && node src/lib/os.test.ts && vitest run",
+    "test": "node src/lib/format.test.ts && node src/lib/api.test.ts && node src/lib/view.test.ts && node src/lib/traffic.test.ts && node src/lib/geo.test.ts && node src/lib/flags.test.ts && node src/lib/map-aggregate.test.ts && node src/lib/quality.test.ts && node src/lib/sparkline.test.ts && node src/lib/quality-toggle.test.ts && node src/lib/quality-probe.test.ts && node src/lib/theme-mode.test.ts && node src/lib/os.test.ts && vitest run",
     "preview": "vite preview",
     "package-theme": "node scripts/package-theme.mjs"
   },

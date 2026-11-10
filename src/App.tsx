@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react"
-import { Moon, Sun, Wrench } from "lucide-react"
+import { Moon, Sun, SunMoon, Wrench } from "lucide-react"
 
 import { CountryFilter } from "@/components/CountryFilter"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
@@ -12,6 +12,7 @@ import { api, useNodes, type Node } from "@/lib/api"
 import { bandsFor, filterQuality, qualityViewState, useQuality } from "@/lib/quality"
 import { readProbe, saveProbe } from "@/lib/quality-probe"
 import { readQualityOn, saveQualityOn } from "@/lib/quality-toggle"
+import { isDarkMode, nextThemeMode, readThemeMode, saveThemeMode, THEME_MODE_LABEL } from "@/lib/theme-mode"
 import { readView, saveView, type View } from "@/lib/view"
 
 type Me = { authed: boolean; github: boolean; site_name: string; public_page: boolean }
@@ -170,19 +171,32 @@ function ViewSkeleton({ view }: { view: View }) {
 }
 
 function useTheme() {
-  const [dark, setDark] = useState(() => {
-    const saved = localStorage.getItem("theme")
-    return saved ? saved === "dark" : matchMedia("(prefers-color-scheme: dark)").matches
-  })
+  const [mode, setMode] = useState(readThemeMode)
+  // The system's preference, tracked live so "auto" follows a switch while
+  // the page is open — the old code only read it once, on first load.
+  const [systemDark, setSystemDark] = useState(
+    () => matchMedia("(prefers-color-scheme: dark)").matches,
+  )
+  useEffect(() => {
+    const mq = matchMedia("(prefers-color-scheme: dark)")
+    const onChange = (e: MediaQueryListEvent) => setSystemDark(e.matches)
+    mq.addEventListener("change", onChange)
+    return () => mq.removeEventListener("change", onChange)
+  }, [])
+  const dark = isDarkMode(mode, systemDark)
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark)
-    localStorage.setItem("theme", dark ? "dark" : "light")
   }, [dark])
-  return [dark, () => setDark((d) => !d)] as const
+  const cycleTheme = useCallback(() => {
+    const next = nextThemeMode(mode)
+    saveThemeMode(next)
+    setMode(next)
+  }, [mode])
+  return { mode, cycleTheme }
 }
 
 export default function App() {
-  const [dark, toggleTheme] = useTheme()
+  const { mode, cycleTheme } = useTheme()
   const [me, setMe] = useState<Me | null>(null)
   const [meError, setMeError] = useState("")
   const { nodes, error, closed } = useNodes()
@@ -333,8 +347,13 @@ export default function App() {
               <Wrench /> {me.authed ? "进入后台" : "登录"}
             </a>
           </Button>
-          <Button variant="ghost" size="icon" onClick={toggleTheme} title="切换主题">
-            {dark ? <Sun /> : <Moon />}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={cycleTheme}
+            title={`切换主题（当前：${THEME_MODE_LABEL[mode]}）`}
+          >
+            {mode === "auto" ? <SunMoon /> : mode === "light" ? <Sun /> : <Moon />}
           </Button>
         </div>
       </header>
