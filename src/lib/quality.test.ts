@@ -305,27 +305,48 @@ for (const [latency, loss, expected] of [
 
 // qualityReducer: the state machine the polling loop folds outcomes through
 // (the loop itself is exercised below, with a fake scheduler).
-const idle: QualityState = { data: null, error: null }
+const T0 = 1_000_000
+const idle: QualityState = { data: null, stamps: {}, error: null }
 const batch = { "7": slice, "8": slice }
 
-const loaded = qualityReducer(idle, { kind: "ok", data: batch })
-assert.equal(loaded.data, batch, "ok sets the frame")
+const loaded = qualityReducer(idle, { kind: "ok", data: batch }, T0)
+assert.deepEqual(loaded.data, batch, "ok sets the frame")
+assert.deepEqual(loaded.stamps, { "7": T0, "8": T0 }, "ok stamps each node it fetched")
 assert.equal(loaded.error, null, "ok leaves no error")
 
 // A failed refresh keeps the frame it already had, so the page does not blank
 // when one poll misses.
 const failed = qualityReducer(loaded, { kind: "fail", message: "boom" })
-assert.equal(failed.data, batch, "fail keeps the last frame")
+assert.equal(failed.data, loaded.data, "fail keeps the last frame")
 assert.equal(failed.error, "boom", "fail records the message")
 
-const recovered = qualityReducer(failed, { kind: "ok", data: batch })
+const recovered = qualityReducer(failed, { kind: "ok", data: batch }, T0 + 60_000)
 assert.equal(recovered.error, null, "a later success clears the error")
+
+// A partial batch — one node's request missed this round — keeps that node's
+// last frame instead of blanking its cell; the fresh node is updated.
+const freshSlice = {
+  ping: [{ task_id: 1, ts: 100, latency: 42 }],
+  probes: { "1": "中国电信" },
+}
+const partial = qualityReducer(loaded, { kind: "ok", data: { "7": freshSlice } }, T0 + 60_000)
+assert.equal(partial.data!["7"], freshSlice, "the fresh node is updated")
+assert.equal(partial.data!["8"], slice, "the missed node keeps its last frame")
+assert.equal(partial.stamps["7"], T0 + 60_000, "the fresh node's stamp moves")
+assert.equal(partial.stamps["8"], T0, "the missed node's stamp stays put")
+
+// A node that keeps missing past the staleness bound drops out instead of
+// showing stale data forever.
+const stale = qualityReducer(loaded, { kind: "ok", data: { "7": freshSlice } }, T0 + 6 * 60_000)
+assert.equal(stale.data!["7"], freshSlice, "the fresh node still lands")
+assert.equal(stale.data!["8"], undefined, "the long-missed node drops out")
+assert.equal(stale.stamps["8"], undefined, "its stamp goes with it")
 
 // qualityViewState: the tri-state every view reads (R4/R5).
 assert.equal(qualityViewState(false, loaded), undefined, "toggle off -> undefined, even with data held")
 assert.equal(qualityViewState(true, idle), null, "on, no data yet -> null (skeleton)")
 // A failed first fetch reads as the empty map, not a skeleton that never resolves.
-const failedView = qualityViewState(true, { data: null, error: "hub 503" })
+const failedView = qualityViewState(true, { data: null, stamps: {}, error: "hub 503" })
 assert.ok(failedView instanceof Map, "a failed first fetch reads as the empty map, not null")
 assert.equal(failedView!.size, 0, "and it holds nothing")
 const readyView = qualityViewState(true, loaded)

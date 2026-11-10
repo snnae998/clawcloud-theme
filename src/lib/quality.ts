@@ -37,9 +37,20 @@ export type QualityBatch = Record<string, QualitySlice>
 export type QualityState = {
   /** Latest batch, null until a fetch resolves. */
   data: QualityBatch | null
+  /** ms epoch of each node's last successful fetch, keyed like `data`. */
+  stamps: Record<string, number>
   /** Last fetch's error message; cleared on a successful fetch. */
   error: string | null
 }
+
+/**
+ * How long one node's last good frame may stand in for a missed poll: five
+ * missed polls at the 60s cadence. A transient miss (the hub was slow, one
+ * request in the pool timed out) must not blank the cell; a node whose fetch
+ * keeps failing past this bound has genuinely gone quiet, and its frame is
+ * dropped rather than shown forever.
+ */
+export const QUALITY_STALE_MS = 5 * 60_000
 
 /** One probe's raw per-window data — shared shape between the band UI and the
  *  detail page's latency chart, so a payload shape change only ripples here. */
@@ -317,7 +328,8 @@ export async function fetchQuality(ids: number[]): Promise<QualityBatch> {
       try {
         batch[String(id)] = await fetchNodeQuality(id)
       } catch {
-        // Leave the node out; the band reads a missing id as empty.
+        // Leave the node out of this batch; the reducer keeps its last frame
+        // for up to QUALITY_STALE_MS instead of blanking its cell.
       }
     }
   })
@@ -327,7 +339,7 @@ export async function fetchQuality(ids: number[]): Promise<QualityBatch> {
 
 const REFRESH_MS = 60_000
 
-const IDLE: QualityState = { data: null, error: null }
+const IDLE: QualityState = { data: null, stamps: {}, error: null }
 
 /** A fetch outcome, folded through `qualityReducer`. */
 export type QualityEvent = { kind: "ok"; data: QualityBatch } | { kind: "fail"; message: string }
@@ -335,17 +347,39 @@ export type QualityEvent = { kind: "ok"; data: QualityBatch } | { kind: "fail"; 
 /**
  * The state machine `useQuality` folds fetch outcomes through. Pure, so the
  * lifecycle it encodes is testable without a DOM (which this repo has none of):
- * success replaces the frame and clears any error, while a failure keeps the
- * last frame and records the message -- the page must not blank when one poll
- * misses.
+ * success merges the fresh frame over the last one and clears any error, while
+ * a failure keeps the last frame and records the message -- the page must not
+ * blank when one poll misses.
+ *
+ * Merge, not replace: a batch only carries the nodes whose requests succeeded
+ * this round (`fetchQuality` leaves a failed node out), so replacing the frame
+ * would blank every node that missed one poll — the flickering empty cells.
+ * A node absent from the fresh batch keeps its previous slice, stamped when
+ * it last landed; entries older than QUALITY_STALE_MS are dropped, so a node
+ * that has genuinely gone quiet clears out instead of showing stale data
+ * forever. `now` is injectable so tests can drive the bound without a clock.
  */
-export function qualityReducer(state: QualityState, event: QualityEvent): QualityState {
+export function qualityReducer(
+  state: QualityState,
+  event: QualityEvent,
+  now = Date.now(),
+): QualityState {
   switch (event.kind) {
-    case "ok":
+    case "ok": {
       // A success clears any previous error, so a recovered poll stops reporting one.
-      return { data: event.data, error: null }
+      const data = { ...(state.data ?? {}), ...event.data }
+      const stamps = { ...state.stamps }
+      for (const id of Object.keys(event.data)) stamps[id] = now
+      for (const [id, at] of Object.entries(stamps)) {
+        if (now - at > QUALITY_STALE_MS) {
+          delete data[id]
+          delete stamps[id]
+        }
+      }
+      return { data, stamps, error: null }
+    }
     case "fail":
-      return { data: state.data, error: event.message }
+      return { data: state.data, stamps: state.stamps, error: event.message }
   }
 }
 
