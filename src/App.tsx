@@ -203,8 +203,12 @@ export default function App() {
 
   // 派生值记忆化：这棵树每 2 秒因推送重渲染一次，而这三个值只与 nodes / country /
   // open 有关——切主题、切质量开关、悬停都不该把整个列表重排一遍。
+  // 在线优先、离线沉底：同组内再按面板拖动的后台序号、最后按 id。
   const sorted = useMemo(
-    () => [...(nodes ?? [])].sort((a, b) => a.sort - b.sort || a.id - b.id),
+    () =>
+      [...(nodes ?? [])].sort(
+        (a, b) => Number(b.online) - Number(a.online) || a.sort - b.sort || a.id - b.id,
+      ),
     [nodes],
   )
   // null = unfiltered; a country code narrows the grid but not the summary,
