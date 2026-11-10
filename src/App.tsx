@@ -254,8 +254,14 @@ export default function App() {
       <header className="sticky top-0 z-10 border-b bg-background/80 backdrop-blur">
         <div className="mx-auto flex max-w-[1400px] items-center gap-3 px-4 py-3 sm:px-6">
           {/* The site name is the way back to the list, so a node page needs
-              no back button of its own. */}
-          <button className="font-semibold transition-opacity hover:opacity-70" onClick={() => go(null)}>
+              no back button of its own. The brand mark sits beside it, the
+              way the mockup shows it: a muted circle, so the colourful cloud
+              reads on light and dark headers alike. `public/brand-logo.png`
+              is the user's own Clawcloud mark, bundled with the theme. */}
+          <button className="flex items-center gap-2 font-semibold transition-opacity hover:opacity-70" onClick={() => go(null)}>
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-muted/70 ring-1 ring-border">
+              <img src="/brand-logo.png" alt="" className="h-7 w-7" />
+            </span>
             {me.site_name || "Monitor"}
           </button>
           <div className="flex-1" />
