@@ -4,6 +4,14 @@
 //
 //   node capture.mjs [--base http://127.0.0.1:9911] [--out-dir /tmp/preview-gen]
 //                    [--width 1489] [--height 700] [--only light|dark]
+//                    [--live]
+//
+// --live captures the REAL panel instead of the mock hub: there is no /seed
+// endpoint there, so each pass navigates to BASE, writes theme/view into
+// localStorage on that origin, and reloads so the app picks them up. The
+// mock hub path is unchanged. Live note: the captures show the panel's real
+// node names and traffic — only use --live when that is intended to be
+// public (the preview ships in the theme package).
 //
 // Requires a mock hub (see mock-hub.mjs) serving the built app. Viewport
 // height 700: the map container is fixed at 480px, so 700 fills the dark side
@@ -27,6 +35,7 @@ const OUT = arg("out-dir", "/tmp/preview-gen")
 const W = Number(arg("width", 1489))
 const H = Number(arg("height", 700))
 const ONLY = arg("only", null)
+const LIVE = process.argv.includes("--live")
 
 const CHROME = process.env.CHROME_BIN ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 const PROFILE = `${OUT}/profile-cdp`
@@ -148,8 +157,26 @@ async function settle(name, expr, want, ms) {
 }
 
 for (const pass of passes) {
-  await send("Page.navigate", { url: `${BASE}/seed?${pass.seed}` }, sessionId)
-  await settle(pass.name, pass.expr, pass.want, 45_000)
+  if (LIVE) {
+    // no /seed on the real panel: land on the origin, write theme/view into
+    // localStorage, then reload so the app boots with them
+    const q = new URLSearchParams(pass.seed)
+    await send("Page.navigate", { url: BASE }, sessionId)
+    await sleep(2500)
+    const seedExpr = `localStorage.setItem("theme", ${JSON.stringify(q.get("theme"))}); localStorage.setItem("view", ${JSON.stringify(q.get("view"))}); localStorage.removeItem("quality"); "ok"`
+    try {
+      await send("Runtime.evaluate", { expression: seedExpr, returnByValue: true }, sessionId)
+    } catch {
+      await sleep(2000)
+      await send("Runtime.evaluate", { expression: seedExpr, returnByValue: true }, sessionId)
+    }
+    await send("Page.navigate", { url: BASE }, sessionId)
+  } else {
+    await send("Page.navigate", { url: `${BASE}/seed?${pass.seed}` }, sessionId)
+  }
+  // live hub pushes WS frames ~1/2.5s (mock: 300ms), so the light pass needs
+  // ~30s just to grow the sparkline to 12 points — give it 90s
+  await settle(pass.name, pass.expr, pass.want, LIVE ? 90_000 : 45_000)
   await sleep(1800) // let leaflet fades / sparkline transitions settle
   const { data } = await send("Page.captureScreenshot", { format: "png" }, sessionId)
   await writeFile(`${OUT}/${pass.name}.png`, Buffer.from(data, "base64"))
