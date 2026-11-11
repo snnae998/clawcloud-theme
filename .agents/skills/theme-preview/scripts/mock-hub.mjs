@@ -276,7 +276,8 @@ const server = http.createServer(async (req, res) => {
     res.end(`<!doctype html><script>
 localStorage.setItem("theme", ${JSON.stringify(theme)});
 localStorage.setItem("view", ${JSON.stringify(view)});
-localStorage.removeItem("quality");
+localStorage.setItem("quality", "true");
+localStorage.removeItem("quality-probe");
 location.replace("/?preview=1");
 </script>`)
     return

@@ -70,6 +70,19 @@ const PASSES = [
   },
 ]
 
+// The 运营商 dropdown only renders while quality is on (App.tsx ProbeFilter),
+// and its latency rows ("丢包") prove the per-node ping fetch landed — on the
+// live panel, wait for both before shooting the light pass.
+if (LIVE) {
+  const light = PASSES.find((p) => p.name === "light")
+  light.expr = `(() => {
+    if (location.pathname !== "/" || document.readyState !== "complete") return 0
+    if (!document.body.innerText.includes("丢包")) return 0
+    const p = document.querySelector("main svg polyline")
+    return p ? p.getAttribute("points").trim().split(/\\s+/).length : 0
+  })()`
+}
+
 const passes = ONLY ? PASSES.filter((p) => p.name === ONLY) : PASSES
 if (passes.length === 0) { console.error(`no pass named "${ONLY}"`); process.exit(1) }
 
@@ -163,7 +176,7 @@ for (const pass of passes) {
     const q = new URLSearchParams(pass.seed)
     await send("Page.navigate", { url: BASE }, sessionId)
     await sleep(2500)
-    const seedExpr = `localStorage.setItem("theme", ${JSON.stringify(q.get("theme"))}); localStorage.setItem("view", ${JSON.stringify(q.get("view"))}); localStorage.removeItem("quality"); "ok"`
+    const seedExpr = `localStorage.setItem("theme", ${JSON.stringify(q.get("theme"))}); localStorage.setItem("view", ${JSON.stringify(q.get("view"))}); localStorage.setItem("quality", "true"); localStorage.removeItem("quality-probe"); "ok"`
     try {
       await send("Runtime.evaluate", { expression: seedExpr, returnByValue: true }, sessionId)
     } catch {
