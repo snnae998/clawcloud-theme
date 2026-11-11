@@ -1,10 +1,20 @@
 // Compose the diagonal-split promo image in the repo's established style:
 // black canvas (sampled from the dark capture's background), both captures
 // inset on rounded-corner cards, dark layer revealed right of the canvas's
-// corner-to-corner diagonal.
+// corner-to-corner diagonal, fading in over a feather band so the light/dark
+// transition reads as a gradient wipe instead of a hard cut.
 //
 //   node compose.mjs --light light.png --dark dark.png --out preview.png
-//                    [--margin 30] [--radius 32] [--colors 256]
+//                    [--margin 30] [--radius 32] [--colors 256] [--feather 140]
+//
+// The feather is a horizontal band centred on the seam with a smoothstep
+// ease (zero slope at both ends, so no visible kink where the blend starts
+// or ends). The seam slope is -W/H ≈ -1.7, so the across-the-seam width is
+// ~feather/2: 140px horizontal ≈ 70px across the seam, ≈ 35 CSS px at the
+// 2x capture scale. Inside the band the two captures crossfade, so text
+// from both layers ghosts through each other there — that is the price of a
+// smooth wipe; keep the band narrow enough that the ghosting reads as a
+// gradient, not a double exposure.
 //
 // Zero dependencies — PNG decode/encode via node:zlib. The write side is
 // indexed (colorType 3) rather than truecolor: a 2x-DPR screenshot of text and
@@ -31,6 +41,7 @@ const OUT = arg("out", null)
 const M = Number(arg("margin", 30))
 const R = Number(arg("radius", 32))
 const COLORS = Math.min(256, Math.max(0, Number(arg("colors", 256)))) // 0 = truecolor; PNG caps indexed at 256
+const FEATHER = Math.max(2, Number(arg("feather", 140))) // horizontal px of the seam blend band
 if (!LIGHT || !DARK || !OUT) {
   console.error("usage: compose.mjs --light L.png --dark D.png --out OUT.png [--margin 30] [--radius 32] [--colors 256]")
   process.exit(1)
@@ -204,14 +215,17 @@ function rectAlpha(x, y) {
   return Math.min(1, Math.max(0, 0.5 - dist / 1.5))
 }
 // corner-to-corner diagonal: line x at row y (top-right -> bottom-left)
+// smoothstep ease: 0 slope at both ends of the feather band
 const xline = (y) => W * (1 - y / (H - 1))
+const smooth = (t) => t * t * (3 - 2 * t)
 
 const out = new Uint8Array(W * H * 3)
 for (let y = 0; y < H; y++) {
   const xl = xline(y)
   for (let x = 0; x < W; x++) {
     const la = rectAlpha(x, y)
-    const da = la * Math.min(1, Math.max(0, (x - xl + 1) / 2))
+    const t = Math.min(1, Math.max(0, (x - xl + FEATHER / 2) / FEATHER))
+    const da = la * smooth(t)
     const o = (y * W + x) * 3
     const inL = x >= M && x < M + LW && y >= M && y < M + LH
     const so = ((y - M) * LW + (x - M)) * 3
