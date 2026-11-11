@@ -94,13 +94,22 @@ def main():
     canvas.alpha_composite(glow)
 
     d = ImageDraw.Draw(canvas, "RGBA")
-    # header: logo + title + tagline
-    logo = Image.open(args.logo).convert("RGBA").resize((128, 128), Image.LANCZOS)
-    canvas.alpha_composite(logo, (64, 64))
-    f_title = font(CJK_BOLD, 96)
-    d.text((216, 62), "Clawcloud · 星图", font=f_title, fill=(255, 255, 255, 255))
-    f_tag = font(CJK_REG, 40)
-    d.text((218, 178), args.tagline, font=f_tag, fill=(159, 176, 204, 255))
+    # header: logo + title + tagline. Keep the lockup modest: the old 96px
+    # title + 128px rainbow logo overpowered the windows below. Latin wordmark
+    # in DejaVu Bold (cleaner Latin glyphs than Noto CJK's), CJK in Noto Bold,
+    # title/tagline ratio ~1.7 instead of 2.4 so the two lines sit together.
+    logo = Image.open(args.logo).convert("RGBA").resize((96, 96), Image.LANCZOS)
+    canvas.alpha_composite(logo, (64, 72))
+    f_lat = font("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 76)
+    f_cjk = font(CJK_BOLD, 76)
+    tx, ty = 184, 66
+    d.text((tx, ty), "Clawcloud", font=f_lat, fill=(255, 255, 255, 255))
+    x1 = tx + d.textlength("Clawcloud", font=f_lat)
+    d.text((x1, ty), " · ", font=f_cjk, fill=(143, 163, 200, 255))
+    x2 = x1 + d.textlength(" · ", font=f_cjk)
+    d.text((x2, ty), "星图", font=f_cjk, fill=(255, 255, 255, 255))
+    f_tag = font(CJK_REG, 44)
+    d.text((186, 168), args.tagline, font=f_tag, fill=(159, 176, 204, 255))
     # version pill, top right
     f_ver = font(CJK_REG, 36)
     ver = args.version
@@ -113,7 +122,7 @@ def main():
     # windows
     light = Image.open(args.light).convert("RGB")
     dark = Image.open(args.dark).convert("RGB")
-    wy = 260
+    wy = 250
     for x, shot, label in [(64, light, "浅色 · 卡片"), (1547, dark, "深色 · 地图")]:
         shadow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
         sd = ImageDraw.Draw(shadow)
