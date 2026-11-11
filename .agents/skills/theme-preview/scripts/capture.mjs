@@ -59,12 +59,13 @@ const PASSES = [
   {
     name: "dark",
     seed: "theme=dark&view=map",
-    // bubbles drawn per country: US/DE/HK/SG/JP/GB = 6, >=5 means the chunk
-    // loaded and the marker effect ran
+    // beacons drawn per region: US/DE/GB/HK/JP/SG = 6, >=5 means the chunk
+    // loaded and the beacon effect ran
     expr: `(() => {
       if (location.pathname !== "/" || document.readyState !== "complete") return 0
-      if (!document.querySelector(".leaflet-container")) return 0
-      return document.querySelectorAll("[class*='map-bubble']").length
+      const svg = document.querySelector("svg[aria-label='平面世界节点拓扑地图']")
+      if (!svg) return 0
+      return svg.querySelectorAll("g.cursor-pointer").length
     })()`,
     want: 5,
   },
@@ -190,7 +191,7 @@ for (const pass of passes) {
   // live hub pushes WS frames ~1/2.5s (mock: 300ms), so the light pass needs
   // ~30s just to grow the sparkline to 12 points — give it 90s
   await settle(pass.name, pass.expr, pass.want, LIVE ? 90_000 : 45_000)
-  await sleep(1800) // let leaflet fades / sparkline transitions settle
+  await sleep(1800) // let beacon fades / sparkline transitions settle
   const { data } = await send("Page.captureScreenshot", { format: "png" }, sessionId)
   await writeFile(`${OUT}/${pass.name}.png`, Buffer.from(data, "base64"))
   console.log(`${pass.name}.png written (${W * 2}x${H * 2})`)

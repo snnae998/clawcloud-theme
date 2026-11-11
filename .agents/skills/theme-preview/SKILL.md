@@ -50,11 +50,13 @@ preview.png 交给 judge agent 做视觉验收（浅色窗：摘要卡数值/卡
   跳走了，per-document 的覆盖带不过去。
 - **折线需要多个采样点。** WS 每 300ms 推一帧、推 30 帧后主动关闭（应用 5s 后重连，
   循环补点）。capture 的就绪条件是数 `<polyline points>` 的坐标对数 ≥ 12。
-- **视口高 700 而非更高。** 地图容器固定 h-[480px]，视口 875 时深色半下方会留 ~225 CSS px
-  空黑；700 时地图刚好放满，且浅色半第二行卡片被底边截断——与旧图构图一致。改了页面
-  结构（比如摘要卡变高）后按「地图框底边距视口底 ≤ 60px、浅色侧第二行被截断」重选。
+- **视口高：浅色 700、深色 760。** 地图是 Globe 卡片（2:1 画布 + 右侧地区列表，
+  约 560px 高），700 时深色半底部地区列表会被截掉一行；760 时整张卡片刚好放满。
+  浅色半仍是 700，第二行卡片被底边截断——与旧图构图一致。改了页面结构（比如
+  摘要卡变高）后按「地图框底边距视口底 ≤ 60px、浅色侧第二行被截断」重选。
 - **就绪条件轮询而非固定 sleep**：地图块是懒加载 chunk，固定等待会竞态。settle 表达式
-  对卡片视图数折线点、对地图视图数 `[class*='map-bubble']`（US/DE/HK/SG/JP/GB 共 6 个）。
+  对卡片视图数折线点、对地图视图数 Globe SVG 里的地区亮点
+  `svg[aria-label='平面世界节点拓扑地图'] g.cursor-pointer`（US/DE/GB/HK/JP/SG 共 6 个）。
 - **沙箱里的 Chrome 要用原版，不用 Hatch 加固版。** `/opt/meta-chromium` 对 CDP 发起的
   127.0.0.1 导航一律报 `ERR_BLOCKED_BY_LOCAL_NETWORK_ACCESS_CHECKS`（LNA 检查），
   `--disable-features`、管理策略、`Browser.grantPermissions` 全都绕不过；沙箱网络也
@@ -96,6 +98,6 @@ preview.png 交给 judge agent 做视觉验收（浅色窗：摘要卡数值/卡
 
 - 新增/改名视图或切换控件 → 改 capture.mjs 顶部的 PASSES（seed 参数、settle 表达式、输出名）。
 - 摘要卡/卡片布局变高变矮 → 重选视口高（见上）。
-- 地图不再默认展示气泡 → 换就绪条件（如 `.leaflet-container` + 任一 overlay path）。
+- 地图是 yydz 风格的平面 SVG（2.1.13 起）：就绪条件数 `svg[aria-label='平面世界节点拓扑地图'] g.cursor-pointer`（地区亮点），不再数 Leaflet 气泡。
 - 生成后务必真看一眼两张半图（裁开或整体 Read），数值/布局对不上就地修，别只看合成图的
   「看起来还行」。

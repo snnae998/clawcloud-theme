@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Switch } from "@/components/ui/switch"
 import { api, useNodes, type Node } from "@/lib/api"
+import { resolveNodeGeo } from "@/lib/flat-map"
 import { bandsFor, filterQuality, qualityViewState, useQuality } from "@/lib/quality"
 import { readProbe, saveProbe } from "@/lib/quality-probe"
 import { readQualityOn, saveQualityOn } from "@/lib/quality-toggle"
@@ -27,8 +28,8 @@ const NodeDetail = lazy(loadDetail)
 // paint, so the default card view keeps its current weight (R11).
 const loadTable = () => import("@/components/NodeTable").then((m) => ({ default: m.NodeTable }))
 const NodeTable = lazy(loadTable)
-const loadMap = () => import("@/components/WorldMap").then((m) => ({ default: m.WorldMap }))
-const WorldMap = lazy(loadMap)
+const loadMap = () => import("@/components/Globe").then((m) => ({ default: m.Globe }))
+const Globe = lazy(loadMap)
 
 // `/node/{id}` is a real page: it survives a reload, can be linked to, and back
 // leaves the detail view rather than the site. The hub serves index.html for any
@@ -202,6 +203,9 @@ export default function App() {
   const { nodes, error, closed } = useNodes()
   const [open, go] = useNodeRoute()
   const [country, setCountry] = useState<string | null>(null)
+  // 地区筛选（地图视图点亮点或地区列表时设定）：key 是 `国家:城市`，如
+  // `US:Los Angeles`；城市未匹配到时退回国家码，如 `DE:DE`。
+  const [region, setRegion] = useState<string | null>(null)
   const [view, setView] = useState(readView)
   const switchView = useCallback((next: View) => {
     saveView(next)
@@ -239,10 +243,10 @@ export default function App() {
     void loadDetail()
   }, [loadMe])
 
-  // 地图块反过来，不走挂载即预热：它是最重的一块（Leaflet + 国家轮廓，换到 110m
-  // 后 gzip 仍是详情页的两倍多），却要一次明确的「地图」点按才可能被看到——挂载
-  // 即下等于给每个只看列表的访客白推一份。改成意图触发后，悬停或聚焦该按钮就开始
-  // 下载，与指针移动到按下之间的那段时间重叠；从没碰过地图的人一个字节都不下。
+  // 地图块反过来，不走挂载即预热：它仍是独立的一块（平面世界地图 + 地区控制台），
+  // 却要一次明确的「地图」点按才可能被看到——挂载即下等于给每个只看列表的访客白推
+  // 一份。改成意图触发后，悬停或聚焦该按钮就开始下载，与指针移动到按下之间的那段
+  // 时间重叠；从没碰过地图的人一个字节都不下。
   const warmView = useCallback((v: View) => {
     if (v === "map") void loadMap()
   }, [])
@@ -275,6 +279,20 @@ export default function App() {
     () => (country ? sorted.filter((n) => n.country === country) : sorted),
     [sorted, country],
   )
+  // 地区筛选与国家筛选叠加，只收窄列表，不动汇总。地图本身拿的是 country
+  // 过滤后的 visible，亮点才不会随地区筛选消失。
+  const shown = useMemo(
+    () =>
+      region ? visible.filter((n) => resolveNodeGeo(n)?.regionKey === region) : visible,
+    [visible, region],
+  )
+  // 提示条里不直接印 key：`DE:DE` 这种退回国家码的读起来像重复，城市与国家
+  // 相同时只印国家码。
+  const regionLabel = useMemo(() => {
+    if (!region) return null
+    const [code, city] = region.split(":")
+    return city && city !== code ? `${city} (${code})` : code
+  }, [region])
   const selected = useMemo(() => sorted.find((n) => n.id === open), [sorted, open])
 
   // The hook only fetches while the toggle is on, so off costs the hub nothing
@@ -381,7 +399,14 @@ export default function App() {
           <>
             <Summary nodes={sorted} />
             <div className="flex flex-wrap items-center gap-2">
-              <CountryFilter nodes={sorted} selected={country} onChange={setCountry} />
+              <CountryFilter
+                nodes={sorted}
+                selected={country}
+                onChange={(c) => {
+                  setCountry(c)
+                  setRegion(null)
+                }}
+              />
               {/* ml-auto 而非 justify-between：chip 行换行或过滤器缺席（无国家
                   数据时渲染 null）时，切换控件仍钉在右侧。 */}
               <div className="ml-auto flex items-center gap-2">
@@ -390,27 +415,50 @@ export default function App() {
                 <ViewSwitch view={view} onChange={switchView} onWarm={warmView} />
               </div>
             </div>
+            {region && (
+              <div className="flex items-center justify-between rounded-[2px] border border-border/80 bg-muted/30 px-3 py-1.5 text-xs text-muted-foreground animate-fade-in">
+                <span>
+                  已按地区筛选：<strong className="text-foreground">{regionLabel}</strong>
+                  （共 {shown.length} 台节点）
+                </span>
+                <button
+                  onClick={() => setRegion(null)}
+                  className="rounded-[1px] px-1.5 py-0.5 text-xs font-medium text-foreground underline hover:opacity-80"
+                >
+                  清除地区筛选
+                </button>
+              </div>
+            )}
             {sorted.length === 0 ? (
               <p className="py-16 text-center text-sm text-muted-foreground">还没有节点</p>
             ) : visible.length === 0 ? (
               <p className="py-16 text-center text-sm text-muted-foreground">
                 该国家没有节点。<button className="underline" onClick={() => setCountry(null)}>查看全部</button>
               </p>
+            ) : shown.length === 0 ? (
+              <p className="py-16 text-center text-sm text-muted-foreground">
+                该地区没有节点。<button className="underline" onClick={() => setRegion(null)}>清除地区筛选</button>
+              </p>
             ) : view === "table" ? (
               <ErrorBoundary>
                 <Suspense fallback={<ViewSkeleton view="table" />}>
-                  <NodeTable nodes={visible} onOpen={go} quality={filteredQuality} />
+                  <NodeTable nodes={shown} onOpen={go} quality={filteredQuality} />
                 </Suspense>
               </ErrorBoundary>
             ) : view === "map" ? (
               <ErrorBoundary>
                 <Suspense fallback={<ViewSkeleton view="map" />}>
-                  <WorldMap nodes={visible} onOpen={go} country={country} />
+                  <Globe
+                    nodes={visible}
+                    selectedRegion={region}
+                    onSelectRegion={setRegion}
+                    onOpenNode={go}
+                  />
                 </Suspense>
               </ErrorBoundary>
             ) : (
               <div className="grid items-start gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {visible.map((n: Node) => (
+                {shown.map((n: Node) => (
                   <NodeCard
                     key={n.id}
                     node={n}

@@ -183,19 +183,35 @@
 /* Tabular figures keep live numbers from shifting as they update. */
 .tnum { font-variant-numeric: tabular-nums; }
 
-/* Leaflet 地图（底图为内置 110m 轮廓 + 经纬网，无瓦片）：配色全部走主题
-   变量，CSS 规则覆盖 Leaflet 写在 SVG 上的呈现属性，明暗切换即时生效。
-   选择器双写自身类名：leaflet.css 随懒加载块后注入，同特异性会被它压过。 */
-.leaflet-container.leaflet-container { background: var(--background); font: inherit; }
-.map-land { stroke: var(--border); fill: var(--muted); }
-.map-graticule { stroke: var(--border); opacity: 0.5; }
-.map-bubble-all { stroke: var(--background); fill: var(--online); }
-.map-bubble-partial { stroke: var(--background); fill: var(--foreground); }
-.map-bubble-none { stroke: var(--muted-foreground); fill: transparent; }
-.leaflet-tooltip.leaflet-tooltip {
-  background: var(--popover);
-  color: var(--popover-foreground);
-  border: 1px solid var(--border);
-  box-shadow: none;
+/* 页面和组件渐入平滑动画（地图悬浮卡片与地区筛选提示条用）：动画完成后重置
+   transform 为 none，避免建立包含块导致子元素 sticky 定位失效。 */
+@keyframes fadeInSlide {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
-.leaflet-tooltip-top::before { border-top-color: var(--border); }
+
+.animate-fade-in {
+  animation: fadeInSlide 240ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* 地图地区亮点呼吸光环：仅改变透明度与描边，绝不碰 transform。 */
+@keyframes pulseSvgGlow {
+  0%, 100% {
+    opacity: 0.85;
+    stroke-width: 1;
+  }
+  50% {
+    opacity: 0.25;
+    stroke-width: 1.8;
+  }
+}
+
+.pulse-globe-beacon {
+  animation: pulseSvgGlow 2s ease-in-out infinite;
+}
