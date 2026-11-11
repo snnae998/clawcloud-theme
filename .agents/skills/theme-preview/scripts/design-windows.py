@@ -49,14 +49,7 @@ def window_image(shot, label):
     # traffic lights
     for i, c in enumerate([(255, 95, 87), (254, 188, 46), (40, 200, 64)]):
         d.ellipse([32 + i * 36 - 11, bar // 2 - 11, 32 + i * 36 + 11, bar // 2 + 11], fill=c)
-    # URL pill, centred
-    pill_w = 430
-    pill_x = (ww - pill_w) // 2
-    d.rounded_rectangle([pill_x, 12, pill_x + pill_w, 52], radius=20, fill=(11, 19, 34, 255))
-    f_url = font(CJK_REG, 30)
-    url = "myvps.clawcloud.de"
-    d.text((pill_x + pill_w // 2 - d.textlength(url, font=f_url) // 2, 17),
-           url, font=f_url, fill=(143, 163, 200, 255))
+    # no URL pill: the user does not want the panel address in the image
     # mode label, right
     f_lab = font(CJK_REG, 32)
     d.text((ww - 32 - d.textlength(label, font=f_lab), bar // 2 - 18),
