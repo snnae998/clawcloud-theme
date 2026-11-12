@@ -24,15 +24,17 @@ function Tile({ icon: Icon, label, children }: {
  * Stacked below sm, where two tiles share a phone's width and "23.3 MB" has
  * roughly 70px available.
  */
-function Flow({ down, up, className }: { down: string; up: string; className?: string }) {
+function Flow({ down, up, className, colored = false }: {
+  down: string; up: string; className?: string; colored?: boolean
+}) {
   return (
     <div className={cn("tnum grid grid-cols-1 gap-x-2 sm:grid-cols-2", className)}>
       <span className="inline-flex items-center gap-1">
-        <ArrowDown className="size-3 shrink-0 text-muted-foreground" />
+        <ArrowDown className={cn("size-3 shrink-0", colored ? "text-blue-500" : "text-muted-foreground")} />
         {down}
       </span>
       <span className="inline-flex items-center gap-1">
-        <ArrowUp className="size-3 shrink-0 text-muted-foreground" />
+        <ArrowUp className={cn("size-3 shrink-0", colored ? "text-violet-500" : "text-muted-foreground")} />
         {up}
       </span>
     </div>
@@ -108,12 +110,12 @@ export function Summary({ nodes }: { nodes: Node[] }) {
       </Tile>
 
       <Tile icon={Gauge} label="实时网速">
-        <Flow down={rate(now.rx)} up={rate(now.tx)} className="mt-1 text-sm font-semibold" />
+        <Flow down={rate(now.rx)} up={rate(now.tx)} className="mt-1 text-sm font-semibold" colored />
         <div className="mt-auto pt-1">
           <Spark
             series={[
-              { values: speedHistory.map((s) => s.rx), className: "text-foreground" },
-              { values: speedHistory.map((s) => s.tx), className: "text-muted-foreground" },
+              { values: speedHistory.map((s) => s.rx), className: "text-blue-500" },
+              { values: speedHistory.map((s) => s.tx), className: "text-violet-500" },
             ]}
           />
         </div>

@@ -13,7 +13,7 @@ import { resolveNodeGeo } from "@/lib/flat-map"
 import { bandsFor, filterQuality, qualityViewState, useQuality } from "@/lib/quality"
 import { readProbe, saveProbe } from "@/lib/quality-probe"
 import { readQualityOn, saveQualityOn } from "@/lib/quality-toggle"
-import { isDarkMode, nextThemeMode, readThemeMode, saveThemeMode, THEME_MODE_LABEL } from "@/lib/theme-mode"
+import { isDarkMode, migrateThemeMode, nextThemeMode, saveThemeMode, THEME_MODE_LABEL } from "@/lib/theme-mode"
 import { readView, saveView, type View } from "@/lib/view"
 
 type Me = { authed: boolean; github: boolean; site_name: string; public_page: boolean }
@@ -172,7 +172,7 @@ function ViewSkeleton({ view }: { view: View }) {
 }
 
 function useTheme() {
-  const [mode, setMode] = useState(readThemeMode)
+  const [mode, setMode] = useState(migrateThemeMode)
   // The system's preference, tracked live so "auto" follows a switch while
   // the page is open — the old code only read it once, on first load.
   const [systemDark, setSystemDark] = useState(
