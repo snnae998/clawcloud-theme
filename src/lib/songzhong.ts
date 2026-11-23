@@ -3,8 +3,8 @@ import { useEffect, useState } from "react"
 /**
  * 送中检测数据：各节点自己在出口上测 YouTube 的地区判定（查 premium 页的
  * google.cn 信号，与 xykt IPQuality 同一口径），经 sz-agent 上报到收集器，
- * 收集器把全舰队状态写成同源的 /sz.json。主题只读这个文件渲染标记；文件
- * 不存在（没部署收集器）时整套标记不出现，页面与从前完全一致。
+ * 收集器把全舰队状态发布在 sz.clawcloud.de/sz.json。主题只读这个文件渲染
+ * 标记；文件不存在（没部署收集器）时整套标记不出现，页面与从前完全一致。
  */
 export type SzStatus = "ok" | "cn" | "fail" | "none"
 
@@ -91,9 +91,11 @@ export function szStale(e: SzEntry, nowSec: number): boolean {
 }
 
 const REFRESH_MS = 10 * 60 * 1000
+/** 收集器的公开地址：与面板不同源（独立子域），收集器已开 CORS。 */
+const SZ_URL = "https://sz.clawcloud.de/sz.json"
 
 /**
- * /sz.json 的轮询读取。拿不到（404/网络错/格式坏）就保留上一份好的；
+ * sz.json 的轮询读取。拿不到（404/网络错/格式坏）就保留上一份好的；
  * 从来没拿到过则一直是 null，界面据此完全不渲染送中标记。
  */
 export function useSongzhong(): SzData | null {
@@ -101,7 +103,7 @@ export function useSongzhong(): SzData | null {
   useEffect(() => {
     let stop = false
     const load = () =>
-      fetch("/sz.json", { cache: "no-cache" })
+      fetch(SZ_URL, { cache: "no-cache" })
         .then((res) => (res.ok ? res.json() : null))
         .then((raw) => {
           const parsed = raw ? parseSz(raw) : null
