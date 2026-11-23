@@ -2,8 +2,10 @@ import { ArrowDown, ArrowUp } from "lucide-react"
 
 import { Country, Status } from "@/components/NodeCard"
 import { QualitySlot } from "@/components/QualityBand"
+import { SongzhongMark } from "@/components/SongzhongChip"
 import type { Node } from "@/lib/api"
 import { bandsFor, type ProbeSeries } from "@/lib/quality"
+import { szFor, type SzData } from "@/lib/songzhong"
 import { pair, rate } from "@/lib/format"
 import { trafficFoot } from "@/lib/traffic"
 
@@ -64,12 +66,16 @@ export function NodeTable({
   nodes,
   onOpen,
   quality,
+  sz,
 }: {
   nodes: Node[]
   onOpen: (id: number) => void
   /** Per-node series: undefined = toggle off, null = loading, Map = data ready. */
   quality?: Map<number, ProbeSeries[]> | null
+  /** 送中检测数据（按节点名索引）；null 或空 = 整列不出现。 */
+  sz?: SzData | null
 }) {
+  const showSz = !!sz && sz.size > 0
   return (
     <div className="overflow-x-auto rounded-lg border">
       <table className="w-full min-w-[760px] border-collapse text-sm">
@@ -81,6 +87,7 @@ export function NodeTable({
             <th className="px-3 py-2 font-medium">名称</th>
             <th className="px-3 py-2 font-medium">地区</th>
             <th className="px-3 py-2 font-medium">状态</th>
+            {showSz && <th className="px-3 py-2 font-medium">送中</th>}
             {quality !== undefined && <th className="px-3 py-2 font-medium">网络质量</th>}
             {COLS.map((col) => (
               <th key={col.key} className="px-3 py-2 font-medium">
@@ -106,6 +113,11 @@ export function NodeTable({
               <td className="px-3 py-2">
                 <Status node={node} />
               </td>
+              {showSz && (
+                <td className="px-3 py-2 text-center">
+                  <SongzhongMark entry={szFor(sz, node.name)} />
+                </td>
+              )}
               {/* Fixed width: every row's band spans the same track, so the
                   columns to its right stay aligned across rows. */}
               {quality !== undefined && (

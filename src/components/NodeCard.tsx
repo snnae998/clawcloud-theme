@@ -7,9 +7,11 @@ import { Meter } from "@/components/Meter"
 import { OsIcon } from "@/components/OsIcon"
 import { PublicRemark } from "@/components/PublicRemark"
 import { QualitySlot } from "@/components/QualityBand"
+import { SongzhongMark } from "@/components/SongzhongChip"
 import type { Node } from "@/lib/api"
 import { bytes, daysUntil, FOREVER, osName, pair, percent, rate, uptime } from "@/lib/format"
 import type { ProbeSeries } from "@/lib/quality"
+import type { SzEntry } from "@/lib/songzhong"
 import { monthUsage, trafficFoot } from "@/lib/traffic"
 import { cn } from "@/lib/utils"
 
@@ -82,11 +84,14 @@ export function NodeCard({
   node,
   onOpen,
   quality,
+  sz,
 }: {
   node: Node
   onOpen: () => void
   /** Per-node series: undefined = toggle off, null = loading, [] = no probe. */
   quality?: ProbeSeries[] | null
+  /** 送中检测结论（节点自己上报的）；null/undefined = 无数据，不渲染标记。 */
+  sz?: SzEntry | null
 }) {
   const m = node.metrics
   // 发行版名交给图标，虚拟化与架构留在文字里：这两者没有能一眼认出的标志，
@@ -131,6 +136,8 @@ export function NodeCard({
             {/* virt/arch 单独渲染：它们与 os 同属一次上报，但只在 os 缺席时一并
                 丢掉这两个字段，等于凭一个字段的缺失抹掉另外两个。 */}
             {spec && <span className="truncate">{spec}</span>}
+            {/* 送中标记跟在规格行末尾：🚨 或绿盾，不占名字行。 */}
+            <SongzhongMark entry={sz} />
           </p>
         </div>
         {/* State right, identity left, one line each. */}

@@ -13,6 +13,7 @@ import { resolveNodeGeo } from "@/lib/flat-map"
 import { bandsFor, filterQuality, qualityViewState, useQuality } from "@/lib/quality"
 import { readProbe, saveProbe } from "@/lib/quality-probe"
 import { readQualityOn, saveQualityOn } from "@/lib/quality-toggle"
+import { szFor, useSongzhong } from "@/lib/songzhong"
 import { isDarkMode, migrateThemeMode, nextThemeMode, saveThemeMode, THEME_MODE_LABEL } from "@/lib/theme-mode"
 import { readView, saveView, type View } from "@/lib/view"
 
@@ -302,6 +303,9 @@ export default function App() {
   // new array on every 2s push, which would otherwise restart it each time.
   const qualityIds = useMemo(() => visible.map((n) => n.id).join(","), [visible])
   const qualityState = useQuality(qualityOn, qualityIds)
+  // 送中检测：/sz.json 由收集器生成（节点自己上报），主题只读。没有这个文件
+  // 时 szMap 恒为 null，卡片与表格都不渲染标记，页面与未部署时一致。
+  const szMap = useSongzhong()
   // One value, three meanings the band component reads directly; the derivation
   // (and its "first fetch failed reads as empty" rule) lives in the lib so it
   // has a test.
@@ -442,7 +446,7 @@ export default function App() {
             ) : view === "table" ? (
               <ErrorBoundary>
                 <Suspense fallback={<ViewSkeleton view="table" />}>
-                  <NodeTable nodes={shown} onOpen={go} quality={filteredQuality} />
+                  <NodeTable nodes={shown} onOpen={go} quality={filteredQuality} sz={szMap} />
                 </Suspense>
               </ErrorBoundary>
             ) : view === "map" ? (
@@ -464,6 +468,7 @@ export default function App() {
                     node={n}
                     onOpen={() => go(n.id)}
                     quality={bandsFor(filteredQuality, n.id)}
+                    sz={szFor(szMap, n.name)}
                   />
                 ))}
               </div>
