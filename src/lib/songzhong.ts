@@ -111,9 +111,24 @@ export function szFor(data: SzData | null, name: string): SzEntry | null {
   return data?.get(szKey(name)) ?? null
 }
 
-/** 任一协议栈被判 CN 即送中。 */
+/**
+ * 送中判定以 IPv4 为准（用户 2026-11-24 定）：v4 有结论（ok/cn）就只看 v4，
+ * v6 再怎么样也只是参考；只有 v4 根本没结论（none/fail，如纯 v6 机器）
+ * 才回落到 v6 的结论。
+ */
 export function szCn(e: SzEntry): boolean {
-  return e.v4 === "cn" || e.v6 === "cn"
+  if (e.v4 === "cn") return true
+  if (e.v4 === "ok") return false
+  return e.v6 === "cn"
+}
+
+/** 悬停提示用的双栈明细，如「IPv4 MY · IPv6 CN」；没地区结论的栈不列。 */
+export function szDetail(e: SzEntry): string {
+  const seg = (label: string, st: SzStatus, rg: string) =>
+    rg ? `${label} ${rg}` : st === "cn" ? `${label} CN` : ""
+  return [seg("IPv4", e.v4, e.v4_region), seg("IPv6", e.v6, e.v6_region)]
+    .filter(Boolean)
+    .join(" · ")
 }
 
 /** 未送中时展示的判定地区：优先有 ok 结论的那一栈（v4 在前）。 */

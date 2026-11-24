@@ -2,7 +2,7 @@
 // Run with `npm test`: Node strips the types itself.
 import assert from "node:assert/strict"
 
-import { mergeSz, parseSz, szCn, szFor, szFromNode, szKey, szRegion, szStale } from "./songzhong.ts"
+import { mergeSz, parseSz, szCn, szDetail, szFor, szFromNode, szKey, szRegion, szStale } from "./songzhong.ts"
 
 const good = {
   updated: 100,
@@ -45,11 +45,19 @@ assert.equal(szFor(data, "🏆 乙机")!.name, "乙机")
 // hub 随节点下发的那份：字段清洗与收集器那份同口径，null 就是没上报
 assert.equal(szFromNode("乙机", null), null)
 assert.equal(szFromNode("乙机", undefined), null)
-const embedded = szFromNode("🏆 乙机", { v4: "ok", v4_region: "US", v6: "cn", v6_region: "CN", checked: 200 })
+const embedded = szFromNode("🏆 乙机", { v4: "cn", v4_region: "CN", v6: "ok", v6_region: "US", checked: 200 })
 assert.ok(embedded)
 assert.equal(embedded.name, "🏆 乙机")
 assert.equal(embedded.ip4, "") // 公开字段不带地址
 assert.equal(szCn(embedded), true)
+// 判定以 v4 为准：v4 ok 时 v6 判 CN 也只是参考，不算送中（Evoxt-MY 实例）
+const v6OnlyCn = szFromNode("戊机", { v4: "ok", v4_region: "MY", v6: "cn", v6_region: "CN", checked: 200 })!
+assert.equal(szCn(v6OnlyCn), false)
+assert.equal(szRegion(v6OnlyCn), "MY")
+assert.equal(szDetail(v6OnlyCn), "IPv4 MY · IPv6 CN")
+// v4 没结论（纯 v6 机器）才回落看 v6
+const noV4 = szFromNode("己机", { v4: "none", v4_region: "", v6: "cn", v6_region: "CN", checked: 200 })!
+assert.equal(szCn(noV4), true)
 
 // 合并：节点自带覆盖收集器的同名旧结论，没有自带的继续用收集器的
 const merged = mergeSz(data, [
