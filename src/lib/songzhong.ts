@@ -1,12 +1,10 @@
-import { useEffect, useMemo, useState } from "react"
+import { useMemo } from "react"
 
 /**
  * 送中检测数据：各节点自己在出口上测 YouTube 的地区判定（查 premium 页的
- * google.cn 信号，与 xykt IPQuality 同一口径）。两个来源，同一形状：
- * 补丁版探针 agent 直接报给 hub、随 /api/nodes 的节点对象下发（主来源）；
- * 过渡期未换 agent 的机器仍走老路——sz-agent 报收集器、发布在
- * sz.clawcloud.de/sz.json（兜底）。合并时节点自带的那份优先。两边都没有
- * 数据时整套标记不出现，页面与未部署时一致。
+ * google.cn 信号，与 xykt IPQuality 同一口径）。补丁版探针 agent 把结论
+ * 报给 hub、随 /api/nodes 的节点对象下发，主题只读这一份（老收集器已
+ * 全线退役）。节点没上报过时整套标记不出现，页面与未部署时一致。
  */
 export type SzStatus = "ok" | "cn" | "fail" | "none"
 
@@ -39,29 +37,12 @@ export function szKey(name: string): string {
 }
 
 const status = (v: unknown): SzStatus => (typeof v === "string" && STATUSES.has(v) ? (v as SzStatus) : "fail")
-const text = (v: unknown) => (typeof v === "string" ? v : "")
 const region = (v: unknown) => (typeof v === "string" && REGION.test(v) ? v : "")
 const stamp = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : 0)
 
-function entry(raw: unknown): SzEntry | null {
-  if (typeof raw !== "object" || raw === null) return null
-  const r = raw as Record<string, unknown>
-  if (typeof r.name !== "string" || !r.name) return null
-  return {
-    name: r.name,
-    ip4: text(r.ip4),
-    ip6: text(r.ip6),
-    v4: status(r.v4),
-    v4_region: region(r.v4_region),
-    v6: status(r.v6),
-    v6_region: region(r.v6_region),
-    checked: stamp(r.checked),
-  }
-}
-
 /**
  * hub 随节点下发的那份：没有 name（节点本身就是身份）、没有出口 IP
- * （公开接口不给地址）。其余字段与收集器那份同口径，共用上面的清洗。
+ * （公开接口不给地址），地址字段留空。字段逐个清洗，畸形值降级不丢整条。
  */
 export function szFromNode(name: string, raw: unknown): SzEntry | null {
   if (typeof raw !== "object" || raw === null) return null
@@ -79,32 +60,16 @@ export function szFromNode(name: string, raw: unknown): SzEntry | null {
 }
 
 /**
- * 两份数据合并成一份：先铺收集器的，再用节点自带的逐台覆盖——自带的是
- * 补丁版 agent 的现行结论，收集器那份在该机换完 agent 后就只剩历史。
+ * 节点列表 → 送中视图：逐台取自带的那份，没上报过的跳过；
+ * 整表为空返回 null，界面据此完全不渲染送中标记。
  */
-export function mergeSz(
-  file: SzData | null,
-  nodes: Iterable<{ name: string; songzhong?: unknown }>,
-): SzData | null {
-  const out: SzData = new Map(file ?? [])
+export function szMapFromNodes(nodes: Iterable<{ name: string; songzhong?: unknown }>): SzData | null {
+  const out: SzData = new Map()
   for (const n of nodes) {
     const e = szFromNode(n.name, n.songzhong)
     if (e) out.set(szKey(n.name), e)
   }
   return out.size > 0 ? out : null
-}
-
-/** 畸形的节点条目只丢它自己，不能拖垮整份数据。 */
-export function parseSz(raw: unknown): SzData | null {
-  if (typeof raw !== "object" || raw === null) return null
-  const nodes = (raw as { nodes?: unknown }).nodes
-  if (typeof nodes !== "object" || nodes === null) return null
-  const out: SzData = new Map()
-  for (const value of Object.values(nodes)) {
-    const e = entry(value)
-    if (e) out.set(szKey(e.name), e)
-  }
-  return out
 }
 
 export function szFor(data: SzData | null, name: string): SzEntry | null {
@@ -144,35 +109,10 @@ export function szStale(e: SzEntry, nowSec: number): boolean {
   return e.checked <= 0 || nowSec - e.checked > SZ_STALE_AFTER
 }
 
-const REFRESH_MS = 10 * 60 * 1000
-/** 收集器的公开地址：与面板不同源（独立子域），收集器已开 CORS。 */
-const SZ_URL = "https://sz.clawcloud.de/sz.json"
-
 /**
- * 送中数据的合并视图：sz.json 轮询作兜底层（拿不到就保留上一份好的），
- * 节点自带的那份在合并时覆盖同名条目。两边从来都没数据则为 null，
- * 界面据此完全不渲染送中标记。
+ * 送中数据的视图：纯粹从节点自带的那份派生（推导在 szMapFromNodes，
+ * 单独可测），随节点列表的推送节奏刷新，没有额外轮询。
  */
 export function useSongzhong(nodes: Iterable<{ name: string; songzhong?: unknown }>): SzData | null {
-  const [file, setFile] = useState<SzData | null>(null)
-  useEffect(() => {
-    let stop = false
-    const load = () =>
-      fetch(SZ_URL, { cache: "no-cache" })
-        .then((res) => (res.ok ? res.json() : null))
-        .then((raw) => {
-          const parsed = raw ? parseSz(raw) : null
-          if (!stop && parsed) setFile(parsed)
-        })
-        .catch(() => {})
-    load()
-    const timer = setInterval(() => {
-      if (!document.hidden) load()
-    }, REFRESH_MS)
-    return () => {
-      stop = true
-      clearInterval(timer)
-    }
-  }, [])
-  return useMemo(() => mergeSz(file, nodes), [file, nodes])
+  return useMemo(() => szMapFromNodes(nodes), [nodes])
 }
