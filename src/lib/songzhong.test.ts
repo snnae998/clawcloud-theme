@@ -2,7 +2,7 @@
 // Run with `npm test`: Node strips the types itself.
 import assert from "node:assert/strict"
 
-import { parseSz, szCn, szFor, szKey, szRegion, szStale } from "./songzhong.ts"
+import { mergeSz, parseSz, szCn, szFor, szFromNode, szKey, szRegion, szStale } from "./songzhong.ts"
 
 const good = {
   updated: 100,
@@ -41,5 +41,25 @@ assert.equal(szKey("✅AliCloud-01"), "AliCloud-01")
 assert.equal(szKey("🎖Uuuvps-HK"), "Uuuvps-HK")
 assert.equal(szKey("🍎LXC小玩具"), "LXC小玩具")
 assert.equal(szFor(data, "🏆 乙机")!.name, "乙机")
+
+// hub 随节点下发的那份：字段清洗与收集器那份同口径，null 就是没上报
+assert.equal(szFromNode("乙机", null), null)
+assert.equal(szFromNode("乙机", undefined), null)
+const embedded = szFromNode("🏆 乙机", { v4: "ok", v4_region: "US", v6: "cn", v6_region: "CN", checked: 200 })
+assert.ok(embedded)
+assert.equal(embedded.name, "🏆 乙机")
+assert.equal(embedded.ip4, "") // 公开字段不带地址
+assert.equal(szCn(embedded), true)
+
+// 合并：节点自带覆盖收集器的同名旧结论，没有自带的继续用收集器的
+const merged = mergeSz(data, [
+  { name: "🏆 乙机", songzhong: { v4: "cn", v4_region: "CN", v6: "none", v6_region: "", checked: 200 } },
+  { name: "甲机", songzhong: null },
+])
+assert.ok(merged)
+assert.equal(szCn(szFor(merged, "乙机")!), true) // 乙机以自带为准（新结论送中）
+assert.equal(szFor(merged, "乙机")!.checked, 200)
+assert.equal(szCn(szFor(merged, "甲机")!), true) // 甲机无自带，仍是收集器的
+assert.equal(mergeSz(null, [{ name: "x", songzhong: null }]), null)
 
 console.log("songzhong.test.ts: all assertions passed")

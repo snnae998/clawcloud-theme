@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 
 /**
  * 送中检测数据：各节点自己在出口上测 YouTube 的地区判定（查 premium 页的
- * google.cn 信号，与 xykt IPQuality 同一口径），经 sz-agent 上报到收集器，
- * 收集器把全舰队状态发布在 sz.clawcloud.de/sz.json。主题只读这个文件渲染
- * 标记；文件不存在（没部署收集器）时整套标记不出现，页面与从前完全一致。
+ * google.cn 信号，与 xykt IPQuality 同一口径）。两个来源，同一形状：
+ * 补丁版探针 agent 直接报给 hub、随 /api/nodes 的节点对象下发（主来源）；
+ * 过渡期未换 agent 的机器仍走老路——sz-agent 报收集器、发布在
+ * sz.clawcloud.de/sz.json（兜底）。合并时节点自带的那份优先。两边都没有
+ * 数据时整套标记不出现，页面与未部署时一致。
  */
 export type SzStatus = "ok" | "cn" | "fail" | "none"
 
@@ -36,13 +38,15 @@ export function szKey(name: string): string {
   return name.replace(/^[^\p{L}\p{N}]+/u, "").trim()
 }
 
+const status = (v: unknown): SzStatus => (typeof v === "string" && STATUSES.has(v) ? (v as SzStatus) : "fail")
+const text = (v: unknown) => (typeof v === "string" ? v : "")
+const region = (v: unknown) => (typeof v === "string" && REGION.test(v) ? v : "")
+const stamp = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : 0)
+
 function entry(raw: unknown): SzEntry | null {
   if (typeof raw !== "object" || raw === null) return null
   const r = raw as Record<string, unknown>
   if (typeof r.name !== "string" || !r.name) return null
-  const status = (v: unknown): SzStatus => (typeof v === "string" && STATUSES.has(v) ? (v as SzStatus) : "fail")
-  const text = (v: unknown) => (typeof v === "string" ? v : "")
-  const region = (v: unknown) => (typeof v === "string" && REGION.test(v) ? v : "")
   return {
     name: r.name,
     ip4: text(r.ip4),
@@ -51,8 +55,43 @@ function entry(raw: unknown): SzEntry | null {
     v4_region: region(r.v4_region),
     v6: status(r.v6),
     v6_region: region(r.v6_region),
-    checked: typeof r.checked === "number" && Number.isFinite(r.checked) ? r.checked : 0,
+    checked: stamp(r.checked),
   }
+}
+
+/**
+ * hub 随节点下发的那份：没有 name（节点本身就是身份）、没有出口 IP
+ * （公开接口不给地址）。其余字段与收集器那份同口径，共用上面的清洗。
+ */
+export function szFromNode(name: string, raw: unknown): SzEntry | null {
+  if (typeof raw !== "object" || raw === null) return null
+  const r = raw as Record<string, unknown>
+  return {
+    name,
+    ip4: "",
+    ip6: "",
+    v4: status(r.v4),
+    v4_region: region(r.v4_region),
+    v6: status(r.v6),
+    v6_region: region(r.v6_region),
+    checked: stamp(r.checked),
+  }
+}
+
+/**
+ * 两份数据合并成一份：先铺收集器的，再用节点自带的逐台覆盖——自带的是
+ * 补丁版 agent 的现行结论，收集器那份在该机换完 agent 后就只剩历史。
+ */
+export function mergeSz(
+  file: SzData | null,
+  nodes: Iterable<{ name: string; songzhong?: unknown }>,
+): SzData | null {
+  const out: SzData = new Map(file ?? [])
+  for (const n of nodes) {
+    const e = szFromNode(n.name, n.songzhong)
+    if (e) out.set(szKey(n.name), e)
+  }
+  return out.size > 0 ? out : null
 }
 
 /** 畸形的节点条目只丢它自己，不能拖垮整份数据。 */
@@ -95,11 +134,12 @@ const REFRESH_MS = 10 * 60 * 1000
 const SZ_URL = "https://sz.clawcloud.de/sz.json"
 
 /**
- * sz.json 的轮询读取。拿不到（404/网络错/格式坏）就保留上一份好的；
- * 从来没拿到过则一直是 null，界面据此完全不渲染送中标记。
+ * 送中数据的合并视图：sz.json 轮询作兜底层（拿不到就保留上一份好的），
+ * 节点自带的那份在合并时覆盖同名条目。两边从来都没数据则为 null，
+ * 界面据此完全不渲染送中标记。
  */
-export function useSongzhong(): SzData | null {
-  const [data, setData] = useState<SzData | null>(null)
+export function useSongzhong(nodes: Iterable<{ name: string; songzhong?: unknown }>): SzData | null {
+  const [file, setFile] = useState<SzData | null>(null)
   useEffect(() => {
     let stop = false
     const load = () =>
@@ -107,7 +147,7 @@ export function useSongzhong(): SzData | null {
         .then((res) => (res.ok ? res.json() : null))
         .then((raw) => {
           const parsed = raw ? parseSz(raw) : null
-          if (!stop && parsed) setData(parsed)
+          if (!stop && parsed) setFile(parsed)
         })
         .catch(() => {})
     load()
@@ -119,5 +159,5 @@ export function useSongzhong(): SzData | null {
       clearInterval(timer)
     }
   }, [])
-  return data
+  return useMemo(() => mergeSz(file, nodes), [file, nodes])
 }

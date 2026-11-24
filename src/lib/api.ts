@@ -61,6 +61,15 @@ export type Node = {
   /** 公开备注:hub 已把源文本(Markdown/HTML)渲染成 HTML。对匿名访客可见,以
    * dangerouslySetInnerHTML 渲染(hub 端按受信任管理员内容处理,不净化)。 */
   public_remark_html?: string
+  /** 送中自检结果:补丁版 agent 在本机出口上测得、经 hub 随节点下发。
+   * 老 agent / 未上报时为 null。出口 IP 不在公开字段里(仅面板可见)。 */
+  songzhong?: {
+    v4: string
+    v4_region: string
+    v6: string
+    v6_region: string
+    checked: number
+  } | null
 }
 
 export class ApiError extends Error {

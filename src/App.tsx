@@ -303,9 +303,9 @@ export default function App() {
   // new array on every 2s push, which would otherwise restart it each time.
   const qualityIds = useMemo(() => visible.map((n) => n.id).join(","), [visible])
   const qualityState = useQuality(qualityOn, qualityIds)
-  // 送中检测：/sz.json 由收集器生成（节点自己上报），主题只读。没有这个文件
-  // 时 szMap 恒为 null，卡片与表格都不渲染标记，页面与未部署时一致。
-  const szMap = useSongzhong()
+  // 送中检测：补丁版 agent 的结论随节点下发，老机器的走收集器 sz.json
+  // 兜底，合并细节在 lib。两边都没数据时 szMap 为 null，不渲染标记。
+  const szMap = useSongzhong(nodes ?? [])
   // One value, three meanings the band component reads directly; the derivation
   // (and its "first fetch failed reads as empty" rule) lives in the lib so it
   // has a test.
