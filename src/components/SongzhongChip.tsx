@@ -70,12 +70,13 @@ export function SongzhongMark({ entry }: { entry: SzEntry | null | undefined }) 
 
         <Tooltip.Portal>
           <Tooltip.Content
-            side="top"
-            align="center"
-            sideOffset={8}
+            side="bottom"
+            align="start"
+            alignOffset={-6}
+            sideOffset={6}
             collisionPadding={12}
             className={cn(
-              "z-50 w-56 rounded-xl border border-border/80 bg-popover/95 p-3 text-xs text-popover-foreground backdrop-blur-md select-none",
+              "z-50 w-52 rounded-xl border border-border/80 bg-popover/95 p-3 text-xs text-popover-foreground backdrop-blur-md select-none",
               "shadow-[0_10px_30px_-8px_rgba(0,0,0,0.16),0_2px_8px_-2px_rgba(0,0,0,0.08)]",
               "animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
               "data-[side=bottom]:slide-in-from-top-1 data-[side=top]:slide-in-from-bottom-1",
@@ -141,6 +142,7 @@ export function SongzhongMark({ entry }: { entry: SzEntry | null | undefined }) 
               <span>检测时间</span>
               <span>{when}</span>
             </div>
+            <Tooltip.Arrow className="fill-popover/95" width={10} height={5} />
           </Tooltip.Content>
         </Tooltip.Portal>
       </Tooltip.Root>
