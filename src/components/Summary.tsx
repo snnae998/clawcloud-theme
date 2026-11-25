@@ -31,9 +31,35 @@ function Tile({ icon: Icon, label, children }: {
  * two-column grid. `rate()` also dropped its forced 1 decimal (see
  * format.ts), so the common case stays on one line anyway.
  */
-function Flow({ down, up, className, colored = false }: {
-  down: string; up: string; className?: string; colored?: boolean
+function Flow({ down, up, className, colored = false, mobileStacked = false }: {
+  down: string; up: string; className?: string; colored?: boolean; mobileStacked?: boolean
 }) {
+  if (mobileStacked) {
+    return (
+      <div
+        className={cn(
+          "tnum flex flex-col gap-1 text-[12.5px] leading-tight sm:grid sm:grid-cols-2 sm:gap-x-2 sm:gap-y-0.5 sm:text-sm",
+          className,
+        )}
+      >
+        <div className="flex items-center justify-between gap-2 sm:justify-start sm:gap-0.5">
+          <span className="inline-flex items-center gap-1 whitespace-nowrap">
+            <ArrowDown className={cn("size-3 shrink-0", colored ? "text-blue-500" : "text-muted-foreground")} />
+            <span className="text-[11px] font-normal text-muted-foreground sm:hidden">下行</span>
+          </span>
+          <span className="whitespace-nowrap">{down}</span>
+        </div>
+        <div className="flex items-center justify-between gap-2 sm:justify-start sm:gap-0.5">
+          <span className="inline-flex items-center gap-1 whitespace-nowrap">
+            <ArrowUp className={cn("size-3 shrink-0", colored ? "text-violet-500" : "text-muted-foreground")} />
+            <span className="text-[11px] font-normal text-muted-foreground sm:hidden">上行</span>
+          </span>
+          <span className="whitespace-nowrap">{up}</span>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div
       className={cn(
@@ -122,7 +148,7 @@ export function Summary({ nodes }: { nodes: Node[] }) {
       </Tile>
 
       <Tile icon={Gauge} label="实时网速">
-        <Flow down={rate(now.rx)} up={rate(now.tx)} className="mt-1 font-semibold" colored />
+        <Flow down={rate(now.rx)} up={rate(now.tx)} className="mt-1.5 font-semibold sm:mt-1" colored mobileStacked />
         <div className="mt-auto pt-1">
           <Spark
             series={[
