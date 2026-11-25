@@ -21,19 +21,20 @@ function Tile({ icon: Icon, label, children }: {
 
 /**
  * In and out side by side, the form every traffic figure on this page takes.
- * Stacked below sm, where two tiles share a phone's width and "23.3 MB" has
- * roughly 70px available.
+ * Always two columns, even on a phone: the 10:42 sample proves "↓ 11.4 GB
+ * ↑ 9.75 GB" fits one line in a half-width tile, and stacking it makes the
+ * tile a row taller than its neighbours.
  */
 function Flow({ down, up, className, colored = false }: {
   down: string; up: string; className?: string; colored?: boolean
 }) {
   return (
-    <div className={cn("tnum grid grid-cols-1 gap-x-2 sm:grid-cols-2", className)}>
-      <span className="inline-flex items-center gap-1">
+    <div className={cn("tnum grid grid-cols-2 gap-x-2", className)}>
+      <span className="inline-flex items-center gap-1 whitespace-nowrap">
         <ArrowDown className={cn("size-3 shrink-0", colored ? "text-blue-500" : "text-muted-foreground")} />
         {down}
       </span>
-      <span className="inline-flex items-center gap-1">
+      <span className="inline-flex items-center gap-1 whitespace-nowrap">
         <ArrowUp className={cn("size-3 shrink-0", colored ? "text-violet-500" : "text-muted-foreground")} />
         {up}
       </span>
