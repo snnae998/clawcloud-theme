@@ -1,5 +1,6 @@
-/** 首页的三种浏览形态。默认卡片，其余两个由后续单元填充。 */
-export type View = "cards" | "table" | "map"
+/** 首页的四种浏览形态。默认卡片，其余由后续单元填充；精简列表只在手机上
+ * 出现（桌面端没有它的切换入口），但视图值本身与宽度无关，刷新后保持。 */
+export type View = "cards" | "table" | "map" | "compact"
 
 const KEY = "view"
 
@@ -7,11 +8,11 @@ const KEY = "view"
  * 上次选中的视图，刷新后保持（与明暗主题同机制）。storage 作参数而非直接读
  * 全局：Node 直跑的测试里没有 localStorage，浏览器调用方省略即可。
  *
- * 只认三个已知值——旧版本写入或手改的乱值一律回落卡片，而不是让首页空着。
+ * 只认四个已知值——旧版本写入或手改的乱值一律回落卡片，而不是让首页空着。
  */
 export function readView(storage: Storage = globalThis.localStorage): View {
   const saved = storage.getItem(KEY)
-  return saved === "table" || saved === "map" ? saved : "cards"
+  return saved === "table" || saved === "map" || saved === "compact" ? saved : "cards"
 }
 
 export function saveView(view: View, storage: Storage = globalThis.localStorage): void {

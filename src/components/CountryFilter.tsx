@@ -24,7 +24,7 @@ function Chip({
       // needs its own hover, and the cursor so the chip reads as interactive.
       className={cn(
         badgeVariants({ variant: active ? "default" : "outline" }),
-        "cursor-pointer transition-colors",
+        "cursor-pointer transition-colors max-sm:shrink-0",
         !active && "hover:bg-accent hover:text-accent-foreground",
       )}
     >
@@ -62,8 +62,13 @@ export function CountryFilter({
     (a, b) => b[1] - a[1] || a[0].localeCompare(b[0]),
   )
 
+  // 手机上单行横向滑动、绝不折行（max-sm）；桌面仍是多行平铺。胶囊本身
+  // shrink-0，窄屏下被滑出而不是被压扁。w-full + min-w-0 缺一不可：
+  // nowrap 内容的自动最小宽会把整行撑出页面（实测：只给 min-w-0 时
+  // stretch 仍把它算成 466px 宽），必须显式定宽到父宽，溢出才只留在
+  // 行内滚动、而不变成整页横滑。
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
+    <div className="flex flex-wrap items-center gap-1.5 max-sm:w-full max-sm:min-w-0 max-sm:flex-nowrap max-sm:overflow-x-auto">
       <Chip active={selected === null} onClick={() => onChange(null)}>
         全部 {nodes.length}
       </Chip>

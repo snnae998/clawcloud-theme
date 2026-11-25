@@ -281,7 +281,7 @@ const server = http.createServer(async (req, res) => {
   // flag triggers the visibility override injection below.
   if (url.pathname === "/seed") {
     const theme = url.searchParams.get("theme") === "dark" ? "dark" : "light"
-    const view = ["cards", "table", "map"].includes(url.searchParams.get("view")) ? url.searchParams.get("view") : "cards"
+    const view = ["cards", "table", "map", "compact"].includes(url.searchParams.get("view")) ? url.searchParams.get("view") : "cards"
     res.setHeader("content-type", "text/html; charset=utf-8")
     res.end(`<!doctype html><script>
 localStorage.setItem("theme", ${JSON.stringify(theme)});

@@ -16,10 +16,11 @@ assert.equal(readView(store()), "cards", "空 localStorage 回落卡片")
 assert.equal(readView(store({ view: "cards" })), "cards", "cards 读回")
 assert.equal(readView(store({ view: "table" })), "table", "table 读回")
 assert.equal(readView(store({ view: "map" })), "map", "map 读回")
+assert.equal(readView(store({ view: "compact" })), "compact", "compact 读回")
 assert.equal(readView(store({ view: "gallery" })), "cards", "未知值回落卡片")
 assert.equal(readView(store({ view: "" })), "cards", "空串回落卡片")
 
-for (const v of ["cards", "table", "map"] as View[]) {
+for (const v of ["cards", "table", "map", "compact"] as View[]) {
   const s = store()
   saveView(v, s)
   assert.equal(readView(s), v, `saveView 后读回 ${v}`)

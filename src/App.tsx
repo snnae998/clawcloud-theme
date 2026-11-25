@@ -2,6 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react
 import { Moon, Sun, SunMoon, Wrench } from "lucide-react"
 
 import { CountryFilter } from "@/components/CountryFilter"
+import { CompactList } from "@/components/CompactList"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
 import { NodeCard } from "@/components/NodeCard"
 import { Summary } from "@/components/Summary"
@@ -62,6 +63,14 @@ const VIEWS: { key: View; label: string }[] = [
   { key: "map", label: "地图" },
 ]
 
+// 手机端把宽表格换成精简列表：卡片 / 精简列表 / 地图。桌面端仍是上面那组，
+// 两组各包一层显示断点（sm:hidden / hidden sm:flex），互不干扰。
+const VIEWS_MOBILE: { key: View; label: string }[] = [
+  { key: "cards", label: "卡片" },
+  { key: "compact", label: "精简列表" },
+  { key: "map", label: "地图" },
+]
+
 /**
  * The three browsing shapes of the fleet. The switcher sits above the country
  * chips -- both act on the list, so they belong to the same group. aria-pressed
@@ -77,9 +86,9 @@ function ViewSwitch({ view, onChange, onWarm }: {
   onChange: (v: View) => void
   onWarm?: (v: View) => void
 }) {
-  return (
-    <div className="flex shrink-0 gap-1">
-      {VIEWS.map((v) => (
+  const renderSet = (views: { key: View; label: string }[], className: string, btnPad: string) => (
+    <div className={`shrink-0 gap-1 ${className}`}>
+      {views.map((v) => (
         <button
           key={v.key}
           type="button"
@@ -87,7 +96,7 @@ function ViewSwitch({ view, onChange, onWarm }: {
           onClick={() => onChange(v.key)}
           onPointerEnter={() => onWarm?.(v.key)}
           onFocus={() => onWarm?.(v.key)}
-          className={`shrink-0 rounded-md px-2.5 py-1 text-xs whitespace-nowrap transition-colors ${
+          className={`shrink-0 rounded-md ${btnPad} py-1 text-xs whitespace-nowrap transition-colors ${
             view === v.key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
           }`}
         >
@@ -95,6 +104,15 @@ function ViewSwitch({ view, onChange, onWarm }: {
         </button>
       ))}
     </div>
+  )
+  return (
+    <>
+      {renderSet(VIEWS, "hidden sm:flex", "px-2.5")}
+      {/* 手机组只在 <640px 显示：左右 padding 收窄 4px/边，三按钮共省
+          约 24px——375px 宽下控制条两端（开关+下拉 / 视图切换）才能同
+          行塞下、整页不横滑；桌面组不动。 */}
+      {renderSet(VIEWS_MOBILE, "flex sm:hidden", "px-1.5")}
+    </>
   )
 }
 
@@ -133,7 +151,8 @@ function ProbeFilter({
   const options = probe && !probes.includes(probe) ? [probe, ...probes] : probes
   return (
     <label className="flex shrink-0 items-center gap-1.5 text-xs whitespace-nowrap text-muted-foreground">
-      运营商
+      {/* 手机上只留下拉本身（当前值就是运营商名），「运营商」三字不占宽。 */}
+      <span className="max-sm:hidden">运营商</span>
       <select
         value={probe ?? ""}
         onChange={(e) => onChange(e.target.value || null)}
@@ -169,7 +188,29 @@ function ViewSkeleton({ view }: { view: View }) {
         ))}
       </div>
     )
+  if (view === "compact")
+    return (
+      <div className="space-y-2">
+        {[0, 1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-11" />
+        ))}
+      </div>
+    )
   return <Skeleton className="h-[480px] w-full" />
+}
+
+// 视图在手机与桌面是两套：精简列表只在手机上可选。跟踪宽度，桌面宽度下把
+// compact 回落成卡片（localStorage 里的值不动，回手机仍是精简列表）。
+// 断点与 Tailwind 的 max-sm（<640px）对齐。
+function useIsMobile() {
+  const [mobile, setMobile] = useState(() => matchMedia("(max-width: 639px)").matches)
+  useEffect(() => {
+    const mq = matchMedia("(max-width: 639px)")
+    const onChange = (e: MediaQueryListEvent) => setMobile(e.matches)
+    mq.addEventListener("change", onChange)
+    return () => mq.removeEventListener("change", onChange)
+  }, [])
+  return mobile
 }
 
 function useTheme() {
@@ -212,6 +253,9 @@ export default function App() {
     saveView(next)
     setView(next)
   }, [])
+  // 桌面宽度下精简列表不存在：显示卡片，但保存的值不动，回手机仍是它。
+  const isMobile = useIsMobile()
+  const activeView = view === "compact" && !isMobile ? "cards" : view
 
   const [qualityOn, setQualityOn] = useState(readQualityOn)
   const switchQuality = useCallback((next: boolean) => {
@@ -348,8 +392,9 @@ export default function App() {
 
   return (
     <div className="min-h-svh">
-      <header className="sticky top-0 z-10 border-b bg-background/80 backdrop-blur">
-        <div className="mx-auto flex max-w-[1400px] items-center gap-3 px-4 py-3 sm:px-6">
+      {/* 手机上 48px 高（外加灵动岛的安全区），只在手机断点内收窄；桌面仍是原高。 */}
+      <header className="sticky top-0 z-10 border-b bg-background/80 backdrop-blur max-sm:pt-[env(safe-area-inset-top)]">
+        <div className="mx-auto flex max-w-[1400px] items-center gap-3 px-4 py-3 sm:px-6 max-sm:h-12 max-sm:py-0">
           {/* The site name is the way back to the list, so a node page needs
               no back button of its own. The brand mark sits beside it, the
               way the mockup shows it: a muted circle, so the colourful cloud
@@ -366,7 +411,8 @@ export default function App() {
               theme, so this is a navigation rather than a route. */}
           <Button variant="ghost" size="sm" asChild>
             <a href="/admin/">
-              <Wrench /> {me.authed ? "进入后台" : "登录"}
+              {/* 手机上只留扳手图标，文字不占宽；桌面仍显示「进入后台」。 */}
+              <Wrench /> <span className="max-sm:hidden">{me.authed ? "进入后台" : "登录"}</span>
             </a>
           </Button>
           <Button
@@ -398,11 +444,13 @@ export default function App() {
             </p>
           )
         ) : !nodes ? (
-          <ViewSkeleton view={view} />
+          <ViewSkeleton view={activeView} />
         ) : (
           <>
             <Summary nodes={sorted} />
-            <div className="flex flex-wrap items-center gap-2">
+            {/* 手机上两行：第一行地区胶囊（横滑不折行），第二行左质量开关 +
+                运营商、右视图切换；桌面仍是一行（胶囊左、控件组 ml-auto 靠右）。 */}
+            <div className="flex flex-wrap items-center gap-2 max-sm:flex-col max-sm:items-stretch">
               <CountryFilter
                 nodes={sorted}
                 selected={country}
@@ -412,13 +460,14 @@ export default function App() {
                 }}
               />
               {/* ml-auto 而非 justify-between：chip 行换行或过滤器缺席（无国家
-                  数据时渲染 null）时，切换控件仍钉在右侧。窄屏上该组内部换行：
-                  三个控件各有 shrink-0 + whitespace-nowrap，宁可整块换行也不
-                  把「网络质量」「卡片」一类的字压成两行。 */}
-              <div className="ml-auto flex flex-wrap items-center gap-2">
-                <QualitySwitch on={qualityOn} onChange={switchQuality} />
-                {qualityOn && <ProbeFilter probe={probe} probes={probeNames} onChange={switchProbe} />}
-                <ViewSwitch view={view} onChange={switchView} onWarm={warmView} />
+                  数据时渲染 null）时，切换控件仍钉在右侧。手机上该组改占满整行、
+                  两端对齐：质量开关 + 运营商在左，视图切换在右。 */}
+              <div className="ml-auto flex flex-wrap items-center gap-2 max-sm:ml-0 max-sm:min-w-0 max-sm:w-full max-sm:flex-nowrap max-sm:justify-between">
+                <div className="flex items-center gap-2 max-sm:min-w-0">
+                  <QualitySwitch on={qualityOn} onChange={switchQuality} />
+                  {qualityOn && <ProbeFilter probe={probe} probes={probeNames} onChange={switchProbe} />}
+                </div>
+                <ViewSwitch view={activeView} onChange={switchView} onWarm={warmView} />
               </div>
             </div>
             {region && (
@@ -445,13 +494,15 @@ export default function App() {
               <p className="py-16 text-center text-sm text-muted-foreground">
                 该地区没有节点。<button className="underline" onClick={() => setRegion(null)}>清除地区筛选</button>
               </p>
-            ) : view === "table" ? (
+            ) : activeView === "compact" ? (
+              <CompactList nodes={shown} onOpen={go} quality={filteredQuality} sz={szMap} />
+            ) : activeView === "table" ? (
               <ErrorBoundary>
                 <Suspense fallback={<ViewSkeleton view="table" />}>
                   <NodeTable nodes={shown} onOpen={go} quality={filteredQuality} sz={szMap} />
                 </Suspense>
               </ErrorBoundary>
-            ) : view === "map" ? (
+            ) : activeView === "map" ? (
               <ErrorBoundary>
                 <Suspense fallback={<ViewSkeleton view="map" />}>
                   <Globe

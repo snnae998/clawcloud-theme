@@ -178,7 +178,9 @@ export function NodeCard({
             />
           </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 border-t pt-4 text-xs">
+          {/* 手机上一行：左实时、右累计。只在手机断点内改排布（max-sm），
+              桌面仍是 2×2 网格；第三格的 ml-auto 把累计那组推到右端。 */}
+          <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 border-t pt-4 text-xs max-sm:flex max-sm:flex-nowrap max-sm:items-center max-sm:gap-x-2 max-sm:[&>*]:whitespace-nowrap">
             <span className="tnum inline-flex items-center gap-1.5">
               <ArrowDown className="size-3 text-muted-foreground" />
               {m ? rate(m.net_rx) : "—"}
@@ -187,7 +189,7 @@ export function NodeCard({
               <ArrowUp className="size-3 text-muted-foreground" />
               {m ? rate(m.net_tx) : "—"}
             </span>
-            <span className="tnum inline-flex items-center gap-1.5 text-muted-foreground">
+            <span className="tnum inline-flex items-center gap-1.5 text-muted-foreground max-sm:ml-auto">
               <ArrowDown className="size-3" />
               {bytes(node.total_rx)}
             </span>
