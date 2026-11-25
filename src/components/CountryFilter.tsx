@@ -24,8 +24,9 @@ function Chip({
       // needs its own hover, and the cursor so the chip reads as interactive.
       className={cn(
         badgeVariants({ variant: active ? "default" : "outline" }),
-        "cursor-pointer transition-colors max-sm:h-7 max-sm:shrink-0 max-sm:rounded-full max-sm:px-2.5 max-sm:text-[11.5px] max-sm:font-medium",
-        !active && "hover:bg-accent hover:text-accent-foreground max-sm:border-border/70 max-sm:bg-card max-sm:shadow-2xs",
+        "cursor-pointer transition-all sm:h-7 sm:rounded-full sm:px-3 sm:text-xs sm:font-medium max-sm:h-7 max-sm:shrink-0 max-sm:rounded-full max-sm:px-2.5 max-sm:text-[11.5px] max-sm:font-medium",
+        active && "sm:shadow-xs",
+        !active && "hover:bg-accent hover:text-accent-foreground sm:border-border/70 sm:bg-card sm:shadow-2xs sm:hover:border-ring/60 max-sm:border-border/70 max-sm:bg-card max-sm:shadow-2xs",
       )}
     >
       {children}

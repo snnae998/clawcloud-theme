@@ -77,17 +77,17 @@ export function NodeTable({
 }) {
   const showSz = !!sz && sz.size > 0
   return (
-    <div className="overflow-x-auto rounded-lg border">
+    <div className="overflow-x-auto rounded-lg border sm:rounded-2xl sm:border-border/70 sm:bg-card sm:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_6px_18px_-6px_rgba(0,0,0,0.06)]">
       <table className="w-full min-w-[760px] border-collapse text-sm">
         <thead>
           {/* Headers are centred over their columns, and never wrap: the
               region column holds only a flag, so without nowrap its two
               characters stacked into 地 / 区. */}
-          <tr className="border-b bg-muted/50 text-center text-xs whitespace-nowrap text-muted-foreground">
+          <tr className="border-b bg-muted/50 text-center text-xs whitespace-nowrap text-muted-foreground sm:border-border/60 sm:bg-muted/40 sm:text-[11.5px] sm:tracking-wide">
             {/* 首列钉住：手机上横向滑动时仍能认出是哪台机器（KTD7 的横滑比较
                 保留，钉列只是不让行身份滑出视野）。th/td 各自带底色，否则滑
                 过的内容会从钉住的格子底下透出来。 */}
-            <th className="sticky left-0 z-10 border-r border-border bg-muted px-3 py-2 font-medium">名称</th>
+            <th className="sticky left-0 z-10 border-r border-border bg-muted px-3 py-2 font-medium sm:border-border/60 sm:px-4 sm:py-2.5 sm:text-left">名称</th>
             <th className="px-3 py-2 font-medium">地区</th>
             <th className="px-3 py-2 font-medium">状态</th>
             {showSz && <th className="px-3 py-2 font-medium">送中</th>}
@@ -104,12 +104,12 @@ export function NodeTable({
             <tr
               key={node.id}
               // Same affordances as the card: pointer, focus, Enter or Space.
-              className="cursor-pointer border-b transition-colors last:border-b-0 hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none"
+              className="cursor-pointer border-b transition-colors last:border-b-0 hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none sm:border-border/50 sm:hover:bg-muted/40"
               tabIndex={0}
               onClick={() => onOpen(node.id)}
               onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), onOpen(node.id))}
             >
-              <td className="sticky left-0 z-10 max-w-48 truncate border-r border-border bg-background px-3 py-2 font-medium">{node.name}</td>
+              <td className="sticky left-0 z-10 max-w-48 truncate border-r border-border bg-background px-3 py-2 font-medium sm:border-border/60 sm:bg-card sm:px-4 sm:py-2.5">{node.name}</td>
               <td className="px-3 py-2">
                 <Country node={node} />
               </td>

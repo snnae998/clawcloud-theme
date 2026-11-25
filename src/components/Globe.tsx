@@ -241,7 +241,7 @@ export function Globe({
     : {}
 
   return (
-    <Card className="animate-fade-in gap-0 rounded-[2px] border border-border/80 bg-card p-4 shadow-xs">
+    <Card className="animate-fade-in gap-0 rounded-[2px] border border-border/80 bg-card p-4 shadow-xs sm:rounded-2xl sm:border-border/70 sm:p-5 sm:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_6px_18px_-6px_rgba(0,0,0,0.06)]">
       {/* 头部标题与控制栏 */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-3">
         <div className="flex items-center gap-2.5">
@@ -283,7 +283,7 @@ export function Globe({
         <div
           ref={containerRef}
           onClick={() => setActiveCard(null)}
-          className="relative z-30 col-span-12 flex items-center justify-center rounded-[2px] border border-border/40 bg-muted/15 p-2 select-none lg:col-span-8"
+          className="relative z-30 col-span-12 flex items-center justify-center rounded-[2px] border border-border/40 bg-muted/15 p-2 select-none sm:rounded-xl lg:col-span-8"
         >
           <svg
             viewBox={`0 0 ${FLAT_MAP_VIEW.width} ${FLAT_MAP_VIEW.height}`}

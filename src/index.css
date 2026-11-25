@@ -239,3 +239,14 @@
     -webkit-tap-highlight-color: transparent;
   }
 }
+
+/* 桌面端专属（>=640px）：拉开画布与卡片明度层次，不动手机端 */
+@media (min-width: 640px) {
+  :root {
+    --background: oklch(0.975 0.002 247);
+  }
+  .dark {
+    --background: oklch(0.128 0 0);
+    --card: oklch(0.188 0 0);
+  }
+}

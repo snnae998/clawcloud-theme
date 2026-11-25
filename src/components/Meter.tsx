@@ -19,7 +19,7 @@ export function Meter({ label, pct, foot, empty = "—" }: Props) {
           {pct === null ? empty : `${filled < 10 ? filled.toFixed(1) : filled.toFixed(0)}%`}
         </span>
       </div>
-      <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+      <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-muted sm:h-2 sm:bg-muted/85 sm:shadow-[inset_0_1px_2px_rgba(0,0,0,0.08)]">
         {/* clip-path 而不是 width：宽度是布局属性，而这棵树每 2 秒收到一次推送，
             每张卡 4 根条、每根一个 500ms 过渡——等于让这几百个元素持续重排。inset
             只影响绘制，外观仅差填充条右端那一处圆角（6px 高的条上，直角与圆角肉眼

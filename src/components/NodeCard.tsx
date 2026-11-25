@@ -41,7 +41,7 @@ export function Status({ node }: { node: Node }) {
       variant="outline"
       className={cn("tnum shrink-0 gap-1.5 font-normal", !node.online && "text-muted-foreground")}
     >
-      <span className={cn("size-1.5 rounded-full", node.online ? "bg-online" : "bg-muted-foreground/40")} />
+      <span className={cn("size-1.5 rounded-full", node.online ? "bg-online sm:shadow-[0_0_0_3px_color-mix(in_oklch,var(--online)_18%,transparent)]" : "bg-muted-foreground/40")} />
       {label.trim()}
     </Badge>
   )
@@ -105,7 +105,7 @@ export function NodeCard({
       // OS line below does not wrap, so on a phone the card would grow past its
       // column and scroll the page sideways. The truncate inside only takes effect
       // once the card is allowed to be narrower.
-      className="min-w-0 cursor-pointer gap-0 p-4 transition-colors hover:border-ring max-sm:rounded-2xl max-sm:border-border/70 max-sm:p-3.5 max-sm:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_6px_16px_-6px_rgba(0,0,0,0.06)] max-sm:transition-transform max-sm:active:scale-[0.985]"
+      className="min-w-0 cursor-pointer gap-0 p-4 transition-colors hover:border-ring sm:rounded-2xl sm:border-border/70 sm:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_6px_18px_-6px_rgba(0,0,0,0.06)] sm:transition-all sm:duration-200 sm:hover:-translate-y-0.5 sm:hover:border-ring/70 sm:hover:shadow-[0_4px_12px_rgba(0,0,0,0.05),0_12px_28px_-10px_rgba(0,0,0,0.1)] max-sm:rounded-2xl max-sm:border-border/70 max-sm:p-3.5 max-sm:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_6px_16px_-6px_rgba(0,0,0,0.06)] max-sm:transition-transform max-sm:active:scale-[0.985]"
       role="button"
       tabIndex={0}
       onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), onOpen())}
@@ -180,7 +180,7 @@ export function NodeCard({
 
           {/* 手机上一行：左实时、右累计。只在手机断点内改排布（max-sm），
               桌面仍是 2×2 网格；第三格的 ml-auto 把累计那组推到右端。 */}
-          <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 border-t pt-4 text-xs max-sm:mt-3 max-sm:flex max-sm:flex-nowrap max-sm:items-center max-sm:gap-x-2 max-sm:rounded-lg max-sm:border-t-0 max-sm:bg-muted/50 max-sm:px-2.5 max-sm:py-1.5 max-sm:text-[11.5px] max-sm:[&>*]:whitespace-nowrap">
+          <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 border-t pt-4 text-xs sm:rounded-xl sm:border-t-0 sm:bg-muted/45 sm:px-3 sm:py-2.5 max-sm:mt-3 max-sm:flex max-sm:flex-nowrap max-sm:items-center max-sm:gap-x-2 max-sm:rounded-lg max-sm:border-t-0 max-sm:bg-muted/50 max-sm:px-2.5 max-sm:py-1.5 max-sm:text-[11.5px] max-sm:[&>*]:whitespace-nowrap">
             <span className="tnum inline-flex items-center gap-1.5">
               <ArrowDown className="size-3 text-muted-foreground" />
               {m ? rate(m.net_rx) : "—"}
@@ -203,7 +203,7 @@ export function NodeCard({
               question ("how has the line been") than the instantaneous rates
               above. QualitySlot renders nothing when there is nothing to draw,
               so the card keeps its height whether or not probes exist. */}
-          <QualitySlot quality={quality} className="mt-4 border-t pt-4 max-sm:mt-2.5 max-sm:border-t-0 max-sm:pt-0" />
+          <QualitySlot quality={quality} className="mt-4 border-t pt-4 sm:mt-3 sm:border-border/50 sm:pt-3 max-sm:mt-2.5 max-sm:border-t-0 max-sm:pt-0" />
         </>
       ) : (
         /* Never connected: nothing to plot, so the card stays short rather than

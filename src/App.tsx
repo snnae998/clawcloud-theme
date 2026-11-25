@@ -88,7 +88,8 @@ function ViewSwitch({ view, onChange, onWarm }: {
 }) {
   return (
     <>
-      <div className="hidden shrink-0 gap-1 sm:flex">
+      {/* 桌面端分段控制器样式，手机端下方逻辑不动 */}
+      <div className="hidden shrink-0 items-center gap-0.5 rounded-lg border border-border/60 bg-muted/75 p-0.5 shadow-2xs sm:flex">
         {VIEWS.map((v) => (
           <button
             key={v.key}
@@ -97,8 +98,10 @@ function ViewSwitch({ view, onChange, onWarm }: {
             onClick={() => onChange(v.key)}
             onPointerEnter={() => onWarm?.(v.key)}
             onFocus={() => onWarm?.(v.key)}
-            className={`shrink-0 rounded-md px-2.5 py-1 text-xs whitespace-nowrap transition-colors ${
-              view === v.key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
+            className={`shrink-0 cursor-pointer rounded-md px-3 py-1 text-xs whitespace-nowrap transition-all ${
+              view === v.key
+                ? "bg-card font-medium text-foreground shadow-2xs"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             {v.label}
@@ -170,7 +173,7 @@ function ProbeFilter({
         value={probe ?? ""}
         onChange={(e) => onChange(e.target.value || null)}
         aria-label="只显示指定运营商的探测"
-        className="rounded-md border border-input bg-background px-1.5 py-1 text-xs text-foreground max-sm:h-7 max-sm:rounded-lg max-sm:border-transparent max-sm:bg-muted/70 max-sm:px-2 max-sm:text-[11.5px] max-sm:font-medium"
+        className="rounded-md border border-input bg-background px-1.5 py-1 text-xs text-foreground sm:h-7 sm:rounded-lg sm:border-border/70 sm:bg-card sm:px-2.5 sm:shadow-2xs sm:transition-colors sm:hover:border-ring/60 max-sm:h-7 max-sm:rounded-lg max-sm:border-transparent max-sm:bg-muted/70 max-sm:px-2 max-sm:text-[11.5px] max-sm:font-medium"
       >
         <option value="">全部</option>
         {options.map((name) => (
@@ -406,7 +409,7 @@ export default function App() {
   return (
     <div className="min-h-svh">
       {/* 手机上 48px 高（外加灵动岛的安全区），只在手机断点内收窄；桌面仍是原高。 */}
-      <header className="sticky top-0 z-10 border-b bg-background/80 backdrop-blur max-sm:border-border/70 max-sm:bg-background/85 max-sm:backdrop-blur-md max-sm:pt-[env(safe-area-inset-top)]">
+      <header className="sticky top-0 z-10 border-b bg-background/80 backdrop-blur sm:border-border/70 sm:bg-background/85 sm:backdrop-blur-md max-sm:border-border/70 max-sm:bg-background/85 max-sm:backdrop-blur-md max-sm:pt-[env(safe-area-inset-top)]">
         <div className="mx-auto flex max-w-[1400px] items-center gap-3 px-4 py-3 sm:px-6 max-sm:h-12 max-sm:px-3.5 max-sm:py-0">
           {/* The site name is the way back to the list, so a node page needs
               no back button of its own. The brand mark sits beside it, the
@@ -425,7 +428,7 @@ export default function App() {
           <Button
             variant="ghost"
             size="sm"
-            className="max-sm:size-8 max-sm:rounded-full max-sm:border max-sm:border-border/70 max-sm:bg-card max-sm:p-0 max-sm:shadow-2xs"
+            className="sm:h-8 sm:rounded-full sm:border sm:border-border/70 sm:bg-card sm:px-3 sm:shadow-2xs sm:hover:bg-accent max-sm:size-8 max-sm:rounded-full max-sm:border max-sm:border-border/70 max-sm:bg-card max-sm:p-0 max-sm:shadow-2xs"
             asChild
           >
             <a href="/admin/">
@@ -436,7 +439,7 @@ export default function App() {
           <Button
             variant="ghost"
             size="icon"
-            className="max-sm:size-8 max-sm:rounded-full max-sm:border max-sm:border-border/70 max-sm:bg-card max-sm:shadow-2xs"
+            className="sm:size-8 sm:rounded-full sm:border sm:border-border/70 sm:bg-card sm:shadow-2xs sm:hover:bg-accent max-sm:size-8 max-sm:rounded-full max-sm:border max-sm:border-border/70 max-sm:bg-card max-sm:shadow-2xs"
             onClick={cycleTheme}
             title={`切换主题（当前：${THEME_MODE_LABEL[mode]}）`}
           >
@@ -490,7 +493,7 @@ export default function App() {
               </div>
             </div>
             {region && (
-              <div className="flex items-center justify-between rounded-[2px] border border-border/80 bg-muted/30 px-3 py-1.5 text-xs text-muted-foreground animate-fade-in">
+              <div className="flex items-center justify-between rounded-[2px] border border-border/80 bg-muted/30 px-3 py-1.5 text-xs text-muted-foreground animate-fade-in sm:rounded-xl sm:border-border/70 sm:bg-card sm:px-4 sm:py-2 sm:shadow-2xs">
                 <span>
                   已按地区筛选：<strong className="text-foreground">{regionLabel}</strong>
                   （共 {shown.length} 台节点）

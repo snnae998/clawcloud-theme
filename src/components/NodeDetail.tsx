@@ -69,8 +69,8 @@ const TABS = [
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div>
-      <h4 className="mb-2 text-xs font-medium text-muted-foreground">{title}</h4>
+    <div className="sm:rounded-2xl sm:border sm:border-border/70 sm:bg-card sm:p-4 sm:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_4px_14px_-6px_rgba(0,0,0,0.05)]">
+      <h4 className="mb-2 text-xs font-medium text-muted-foreground sm:mb-3">{title}</h4>
       <div className="h-40 w-full text-muted-foreground">{children}</div>
     </div>
   )
@@ -80,8 +80,10 @@ function Tab({ active, onClick, children }: { active: boolean; onClick: () => vo
   return (
     <button
       onClick={onClick}
-      className={`rounded-md px-2.5 py-1 text-xs transition-colors ${
-        active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
+      className={`cursor-pointer rounded-md px-2.5 py-1 text-xs transition-all sm:px-3 ${
+        active
+          ? "bg-primary text-primary-foreground sm:bg-card sm:font-medium sm:text-foreground sm:shadow-2xs"
+          : "text-muted-foreground hover:bg-muted sm:hover:bg-transparent sm:hover:text-foreground"
       }`}
     >
       {children}
@@ -297,8 +299,9 @@ export function NodeDetail({ node }: { node: Node }) {
 
   return (
     <div className="space-y-4">
+      <div className="space-y-4 sm:rounded-2xl sm:border sm:border-border/70 sm:bg-card sm:p-5 sm:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_6px_18px_-6px_rgba(0,0,0,0.06)]">
       <div className="flex items-center gap-2">
-        <h2 className="truncate text-lg font-medium">{node.name}</h2>
+        <h2 className="truncate text-lg font-medium sm:text-xl sm:font-semibold sm:tracking-tight">{node.name}</h2>
         <Country node={node} />
         <Status node={node} />
       </div>
@@ -307,7 +310,7 @@ export function NodeDetail({ node }: { node: Node }) {
           out is one machine's spec sheet, and a box around a single topic is
           just a box. Three across at lg, two at md, one on a phone -- a kernel
           version or a CPU model needs about 270px to stay whole. */}
-      <dl className="grid gap-x-6 gap-y-3 md:grid-cols-2 lg:grid-cols-3">
+      <dl className="grid gap-x-6 gap-y-3 sm:border-t sm:border-border/50 sm:pt-4 md:grid-cols-2 lg:grid-cols-3">
         <Fact
           label="系统"
           icon={node.os ? <OsIcon os={node.os} /> : undefined}
@@ -335,6 +338,7 @@ export function NodeDetail({ node }: { node: Node }) {
           ].join(" · ")}
         />
       </dl>
+      </div>
 
       {/* 私有备注 `remark`：README「主题契约」写明匿名访问 /nodes 的响应不含
           ip、hostname、remark，所以对匿名访客它渲染不出来——「私有备注不公开」由
@@ -345,8 +349,8 @@ export function NodeDetail({ node }: { node: Node }) {
       )}
       <PublicRemark html={node.public_remark_html} className="rounded-md bg-muted px-3 py-2" />
 
-      <div className="space-y-2 border-t pt-4">
-        <div className="flex gap-1">
+      <div className="space-y-2 border-t pt-4 sm:flex sm:flex-wrap sm:items-center sm:justify-between sm:gap-3 sm:space-y-0 sm:border-t-0 sm:pt-0">
+        <div className="flex gap-1 sm:inline-flex sm:rounded-lg sm:border sm:border-border/60 sm:bg-muted/75 sm:p-0.5 sm:shadow-2xs">
           {TABS.map((t) => (
             <Tab key={t.key} active={tab === t.key} onClick={() => setTab(t.key)}>
               {t.label}
@@ -354,7 +358,7 @@ export function NodeDetail({ node }: { node: Node }) {
           ))}
         </div>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          <div className="flex gap-1">
+          <div className="flex gap-1 sm:inline-flex sm:rounded-lg sm:border sm:border-border/60 sm:bg-muted/75 sm:p-0.5 sm:shadow-2xs">
             {RANGES_FOR[tab].map((r) => (
               <Tab
                 key={r.hours}
