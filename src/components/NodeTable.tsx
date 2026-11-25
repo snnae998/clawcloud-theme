@@ -87,7 +87,7 @@ export function NodeTable({
             {/* 首列钉住：手机上横向滑动时仍能认出是哪台机器（KTD7 的横滑比较
                 保留，钉列只是不让行身份滑出视野）。th/td 各自带底色，否则滑
                 过的内容会从钉住的格子底下透出来。 */}
-            <th className="sticky left-0 z-10 border-r border-border bg-muted px-3 py-2 font-medium sm:border-border/60 sm:px-4 sm:py-2.5 sm:text-left">名称</th>
+            <th className="sticky left-0 z-10 border-r border-border bg-[color-mix(in_oklch,var(--muted)_50%,var(--card))] px-3 py-2 font-medium sm:border-border/60 sm:bg-[color-mix(in_oklch,var(--muted)_40%,var(--card))] sm:px-4 sm:py-2.5 sm:text-left">名称</th>
             <th className="px-3 py-2 font-medium">地区</th>
             <th className="px-3 py-2 font-medium">状态</th>
             {showSz && <th className="px-3 py-2 font-medium">送中</th>}
