@@ -177,7 +177,7 @@ for (const pass of passes) {
     const q = new URLSearchParams(pass.seed)
     await send("Page.navigate", { url: BASE }, sessionId)
     await sleep(2500)
-    const seedExpr = `localStorage.setItem("theme", ${JSON.stringify(q.get("theme"))}); localStorage.setItem("view", ${JSON.stringify(q.get("view"))}); localStorage.setItem("quality", "true"); localStorage.removeItem("quality-probe"); "ok"`
+    const seedExpr = `localStorage.setItem("theme", ${JSON.stringify(q.get("theme"))}); localStorage.setItem("clawcloud-theme", ${JSON.stringify(q.get("theme"))}); localStorage.setItem("view", ${JSON.stringify(q.get("view"))}); localStorage.setItem("quality", "true"); localStorage.removeItem("quality-probe"); "ok"`
     try {
       await send("Runtime.evaluate", { expression: seedExpr, returnByValue: true }, sessionId)
     } catch {

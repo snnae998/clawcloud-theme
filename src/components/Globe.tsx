@@ -257,7 +257,7 @@ export function Globe({
                 FLAT MATRIX
               </Badge>
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-balance text-muted-foreground">
               全球视野一览无余 · 接入 {totalPlaced} 台 · 在线 {onlineCount} 台 · 覆盖 {regions.length} 个地区
             </p>
           </div>

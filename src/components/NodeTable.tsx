@@ -84,7 +84,10 @@ export function NodeTable({
               region column holds only a flag, so without nowrap its two
               characters stacked into 地 / 区. */}
           <tr className="border-b bg-muted/50 text-center text-xs whitespace-nowrap text-muted-foreground">
-            <th className="px-3 py-2 font-medium">名称</th>
+            {/* 首列钉住：手机上横向滑动时仍能认出是哪台机器（KTD7 的横滑比较
+                保留，钉列只是不让行身份滑出视野）。th/td 各自带底色，否则滑
+                过的内容会从钉住的格子底下透出来。 */}
+            <th className="sticky left-0 z-10 border-r border-border bg-muted px-3 py-2 font-medium">名称</th>
             <th className="px-3 py-2 font-medium">地区</th>
             <th className="px-3 py-2 font-medium">状态</th>
             {showSz && <th className="px-3 py-2 font-medium">送中</th>}
@@ -106,7 +109,7 @@ export function NodeTable({
               onClick={() => onOpen(node.id)}
               onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), onOpen(node.id))}
             >
-              <td className="max-w-48 truncate px-3 py-2 font-medium">{node.name}</td>
+              <td className="sticky left-0 z-10 max-w-48 truncate border-r border-border bg-background px-3 py-2 font-medium">{node.name}</td>
               <td className="px-3 py-2">
                 <Country node={node} />
               </td>

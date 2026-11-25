@@ -32,6 +32,8 @@ const expiry = (() => {
   return d.toISOString().slice(0, 10)
 })()
 
+const NOW = Math.floor(Date.now() / 1000)
+
 const nodes = [
   {
     id: 1, name: "us-1", sort: 1, public: true, online: true, country: "US",
@@ -45,6 +47,8 @@ const nodes = [
     net_rx: 2.2 * K * K, net_tx: 390.6 * K,
     total_rx: 838 * GiB, total_tx: 186 * GiB, day_rx: 20 * GiB, day_tx: 4 * GiB,
     month_rx: 200 * GiB, month_tx: 135 * GiB, tcp: 42, udp: 8, procs: 130,
+    // 送中样例：us-1 的 IPv4 被判 CN（卡片与表格都应出现 🚨）
+    songzhong: { v4: "cn", v4_region: "CN", v6: "ok", v6_region: "US", checked: NOW },
   },
   {
     id: 2, name: "us-2", sort: 2, public: true, online: true, country: "US",
@@ -71,6 +75,8 @@ const nodes = [
     net_rx: 2.5 * K * K, net_tx: 0.5 * K * K,
     total_rx: 1500 * GiB, total_tx: 300 * GiB, day_rx: 10 * GiB, day_tx: 2 * GiB,
     month_rx: 210 * GiB, month_tx: 128 * GiB, tcp: 30, udp: 5, procs: 118,
+    // 送中样例：de-1 干净（绿盾）
+    songzhong: { v4: "ok", v4_region: "DE", v6: "ok", v6_region: "DE", checked: NOW },
   },
   {
     id: 4, name: "gb-1", sort: 4, public: true, online: false, country: "GB",
@@ -84,6 +90,8 @@ const nodes = [
     net_rx: 0, net_tx: 0,
     total_rx: 400 * GiB, total_tx: 178 * GiB, day_rx: 0.2 * GiB, day_tx: 0.2 * GiB,
     month_rx: 90 * GiB, month_tx: 60 * GiB, tcp: 0, udp: 0, procs: 0,
+    // 送中样例：gb-1 已离线且结论过期 3 天（🚨 应半透明）
+    songzhong: { v4: "cn", v4_region: "CN", v6: "none", v6_region: "", checked: NOW - 3 * 86400 },
   },
   {
     id: 5, name: "hk-1", sort: 5, public: true, online: true, country: "HK",
@@ -97,6 +105,8 @@ const nodes = [
     net_rx: 2.6 * K * K, net_tx: 0.4 * K * K,
     total_rx: 900 * GiB, total_tx: 200 * GiB, day_rx: 8 * GiB, day_tx: 1.5 * GiB,
     month_rx: 180 * GiB, month_tx: 150 * GiB, tcp: 88, udp: 12, procs: 210,
+    // 送中样例：hk-1 只有 IPv6 被判 CN，IPv4 为准所以仍是绿盾（v6 只进悬停提示）
+    songzhong: { v4: "ok", v4_region: "HK", v6: "cn", v6_region: "CN", checked: NOW },
   },
   {
     id: 6, name: "jp-1", sort: 6, public: true, online: false, country: "JP",
@@ -275,6 +285,7 @@ const server = http.createServer(async (req, res) => {
     res.setHeader("content-type", "text/html; charset=utf-8")
     res.end(`<!doctype html><script>
 localStorage.setItem("theme", ${JSON.stringify(theme)});
+localStorage.setItem("clawcloud-theme", ${JSON.stringify(theme)});
 localStorage.setItem("view", ${JSON.stringify(view)});
 localStorage.setItem("quality", "true");
 localStorage.removeItem("quality-probe");

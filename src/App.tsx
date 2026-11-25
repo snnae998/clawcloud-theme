@@ -78,7 +78,7 @@ function ViewSwitch({ view, onChange, onWarm }: {
   onWarm?: (v: View) => void
 }) {
   return (
-    <div className="flex gap-1">
+    <div className="flex shrink-0 gap-1">
       {VIEWS.map((v) => (
         <button
           key={v.key}
@@ -87,7 +87,7 @@ function ViewSwitch({ view, onChange, onWarm }: {
           onClick={() => onChange(v.key)}
           onPointerEnter={() => onWarm?.(v.key)}
           onFocus={() => onWarm?.(v.key)}
-          className={`rounded-md px-2.5 py-1 text-xs transition-colors ${
+          className={`shrink-0 rounded-md px-2.5 py-1 text-xs whitespace-nowrap transition-colors ${
             view === v.key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
           }`}
         >
@@ -107,7 +107,7 @@ function ViewSwitch({ view, onChange, onWarm }: {
  */
 function QualitySwitch({ on, onChange }: { on: boolean; onChange: (next: boolean) => void }) {
   return (
-    <label className="flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground">
+    <label className="flex shrink-0 cursor-pointer items-center gap-1.5 text-xs whitespace-nowrap text-muted-foreground">
       网络质量
       <Switch checked={on} onCheckedChange={onChange} />
     </label>
@@ -132,7 +132,7 @@ function ProbeFilter({
 }) {
   const options = probe && !probes.includes(probe) ? [probe, ...probes] : probes
   return (
-    <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+    <label className="flex shrink-0 items-center gap-1.5 text-xs whitespace-nowrap text-muted-foreground">
       运营商
       <select
         value={probe ?? ""}
@@ -412,8 +412,10 @@ export default function App() {
                 }}
               />
               {/* ml-auto 而非 justify-between：chip 行换行或过滤器缺席（无国家
-                  数据时渲染 null）时，切换控件仍钉在右侧。 */}
-              <div className="ml-auto flex items-center gap-2">
+                  数据时渲染 null）时，切换控件仍钉在右侧。窄屏上该组内部换行：
+                  三个控件各有 shrink-0 + whitespace-nowrap，宁可整块换行也不
+                  把「网络质量」「卡片」一类的字压成两行。 */}
+              <div className="ml-auto flex flex-wrap items-center gap-2">
                 <QualitySwitch on={qualityOn} onChange={switchQuality} />
                 {qualityOn && <ProbeFilter probe={probe} probes={probeNames} onChange={switchProbe} />}
                 <ViewSwitch view={view} onChange={switchView} onWarm={warmView} />
