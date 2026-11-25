@@ -38,13 +38,13 @@ function MetricCell({ node, metric }: { node: Node; metric: Metric }): React.Rea
       return <span className="tnum">{trafficFoot(node)}</span>
     case "speed":
       return m ? (
-        <span className="tnum inline-flex items-center gap-2">
-          <span className="inline-flex items-center gap-1">
-            <ArrowDown className="size-3 text-muted-foreground" />
+        <span className="tnum inline-flex items-center gap-2 sm:gap-1.5 sm:text-xs">
+          <span className="inline-flex items-center gap-1 sm:gap-0.5">
+            <ArrowDown className="size-3 shrink-0 text-muted-foreground" />
             {rate(m.net_rx)}
           </span>
-          <span className="inline-flex items-center gap-1">
-            <ArrowUp className="size-3 text-muted-foreground" />
+          <span className="inline-flex items-center gap-1 sm:gap-0.5">
+            <ArrowUp className="size-3 shrink-0 text-muted-foreground" />
             {rate(m.net_tx)}
           </span>
         </span>
@@ -78,22 +78,25 @@ export function NodeTable({
   const showSz = !!sz && sz.size > 0
   return (
     <div className="overflow-x-auto rounded-lg border sm:rounded-2xl sm:border-border/70 sm:bg-card sm:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_6px_18px_-6px_rgba(0,0,0,0.06)]">
-      <table className="w-full min-w-[760px] border-collapse text-sm">
+      <table className="w-full min-w-[760px] border-collapse text-sm sm:text-[13px]">
         <thead>
           {/* Headers are centred over their columns, and never wrap: the
               region column holds only a flag, so without nowrap its two
               characters stacked into 地 / 区. */}
-          <tr className="border-b bg-muted/50 text-center text-xs whitespace-nowrap text-muted-foreground sm:border-border/60 sm:bg-muted/40 sm:text-[11.5px] sm:tracking-wide">
+          <tr className="border-b bg-muted/50 text-center text-xs whitespace-nowrap text-muted-foreground sm:border-border/60 sm:bg-[color-mix(in_oklch,var(--card)_55%,var(--muted))] sm:text-[11.5px] sm:tracking-wide">
             {/* 首列钉住：手机上横向滑动时仍能认出是哪台机器（KTD7 的横滑比较
-                保留，钉列只是不让行身份滑出视野）。th/td 各自带底色，否则滑
-                过的内容会从钉住的格子底下透出来。 */}
-            <th className="sticky left-0 z-10 border-r border-border bg-[color-mix(in_oklch,var(--muted)_50%,var(--card))] px-3 py-2 font-medium sm:border-border/60 sm:bg-[color-mix(in_oklch,var(--muted)_40%,var(--card))] sm:px-4 sm:py-2.5 sm:text-left">名称</th>
-            <th className="px-3 py-2 font-medium">地区</th>
-            <th className="px-3 py-2 font-medium">状态</th>
-            {showSz && <th className="px-3 py-2 font-medium">送中</th>}
-            {quality !== undefined && <th className="px-3 py-2 font-medium">网络质量</th>}
-            {COLS.map((col) => (
-              <th key={col.key} className="px-3 py-2 font-medium">
+                保留，钉列只是不让行身份滑出视野）。th/td 各自带实心底色，否则滑
+                过的内容会从钉住的格子底下透出来；桌面端与整行表头共用同一实心混色。 */}
+            <th className="sticky left-0 z-10 border-r border-border bg-muted px-3 py-2 font-medium sm:border-border/60 sm:bg-[color-mix(in_oklch,var(--card)_55%,var(--muted))] sm:px-3.5 sm:py-2.5 sm:text-left">名称</th>
+            <th className="px-3 py-2 font-medium sm:px-2">地区</th>
+            <th className="px-3 py-2 font-medium sm:px-2">状态</th>
+            {showSz && <th className="px-3 py-2 font-medium sm:px-2">送中</th>}
+            {quality !== undefined && <th className="px-3 py-2 font-medium sm:px-2.5">网络质量</th>}
+            {COLS.map((col, idx) => (
+              <th
+                key={col.key}
+                className={`px-3 py-2 font-medium sm:px-2.5 ${idx === COLS.length - 1 ? "sm:pr-3.5" : ""}`}
+              >
                 {col.label}
               </th>
             ))}
@@ -109,27 +112,30 @@ export function NodeTable({
               onClick={() => onOpen(node.id)}
               onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), onOpen(node.id))}
             >
-              <td className="sticky left-0 z-10 max-w-48 truncate border-r border-border bg-background px-3 py-2 font-medium sm:border-border/60 sm:bg-card sm:px-4 sm:py-2.5">{node.name}</td>
-              <td className="px-3 py-2">
+              <td className="sticky left-0 z-10 max-w-48 truncate border-r border-border bg-background px-3 py-2 font-medium sm:max-w-44 sm:border-border/60 sm:bg-card sm:px-3.5 sm:py-2.5">{node.name}</td>
+              <td className="px-3 py-2 sm:px-2 sm:text-center">
                 <Country node={node} />
               </td>
-              <td className="px-3 py-2">
+              <td className="px-3 py-2 sm:px-2">
                 <Status node={node} />
               </td>
               {showSz && (
-                <td className="px-3 py-2 text-center">
+                <td className="px-3 py-2 text-center sm:px-2">
                   <SongzhongMark entry={szFor(sz, node.name)} />
                 </td>
               )}
               {/* Fixed width: every row's band spans the same track, so the
                   columns to its right stay aligned across rows. */}
               {quality !== undefined && (
-                <td className="w-72 min-w-56 px-3 py-2 align-middle">
+                <td className="w-72 min-w-56 px-3 py-2 align-middle sm:w-52 sm:min-w-44 sm:px-2.5">
                   <QualitySlot quality={bandsFor(quality, node.id)} />
                 </td>
               )}
-              {COLS.map((col) => (
-                <td key={col.key} className="whitespace-nowrap px-3 py-2">
+              {COLS.map((col, idx) => (
+                <td
+                  key={col.key}
+                  className={`whitespace-nowrap px-3 py-2 sm:px-2.5 ${idx === COLS.length - 1 ? "sm:pr-3.5" : ""}`}
+                >
                   <MetricCell node={node} metric={col.key} />
                 </td>
               ))}
