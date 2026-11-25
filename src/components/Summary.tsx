@@ -9,9 +9,9 @@ function Tile({ icon: Icon, label, children }: {
   icon: typeof Server; label: string; children: React.ReactNode
 }) {
   return (
-    <Card className="gap-0 p-3">
+    <Card className="min-w-0 overflow-hidden gap-0 p-2.5 sm:p-3">
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-        <Icon className="size-3.5" />
+        <Icon className="size-3.5 shrink-0" />
         {label}
       </div>
       {children}
@@ -21,20 +21,31 @@ function Tile({ icon: Icon, label, children }: {
 
 /**
  * In and out side by side, the form every traffic figure on this page takes.
- * Always two columns, even on a phone: the 10:42 sample proves "↓ 11.4 GB
- * ↑ 9.75 GB" fits one line in a half-width tile, and stacking it makes the
- * tile a row taller than its neighbours.
+ *
+ * The 2.1.23 lesson: a deadlocked `grid-cols-2` plus `whitespace-nowrap`
+ * cannot fit a wide live value ("136.8 KB/s") in a ~73px half-tile — the
+ * first column shoves into the second and the second runs out of the card.
+ * So on mobile this is a wrapping flex row: each side is one nowrap item,
+ * and the pair sits on one line when it fits and folds to two lines when it
+ * doesn't — never overlapping, never out of bounds. `sm:` and up restore the
+ * two-column grid. `rate()` also dropped its forced 1 decimal (see
+ * format.ts), so the common case stays on one line anyway.
  */
 function Flow({ down, up, className, colored = false }: {
   down: string; up: string; className?: string; colored?: boolean
 }) {
   return (
-    <div className={cn("tnum grid grid-cols-2 gap-x-2", className)}>
-      <span className="inline-flex items-center gap-1 whitespace-nowrap">
+    <div
+      className={cn(
+        "tnum flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-xs sm:grid sm:grid-cols-2 sm:gap-x-2 sm:text-sm",
+        className,
+      )}
+    >
+      <span className="inline-flex items-center gap-0.5 whitespace-nowrap">
         <ArrowDown className={cn("size-3 shrink-0", colored ? "text-blue-500" : "text-muted-foreground")} />
         {down}
       </span>
-      <span className="inline-flex items-center gap-1 whitespace-nowrap">
+      <span className="inline-flex items-center gap-0.5 whitespace-nowrap">
         <ArrowUp className={cn("size-3 shrink-0", colored ? "text-violet-500" : "text-muted-foreground")} />
         {up}
       </span>
@@ -51,7 +62,7 @@ function Spark({ series }: { series: { values: number[]; className: string }[] }
   const top = Math.max(...series.flatMap((s) => s.values), 1)
   const width = Math.max(...series.map((s) => s.values.length), 2) - 1
   return (
-    <svg viewBox="0 0 100 24" preserveAspectRatio="none" className="h-7 w-full" aria-hidden>
+    <svg viewBox="0 0 100 24" preserveAspectRatio="none" className="h-5 w-full sm:h-7" aria-hidden>
       {series.map((s, i) => (
         <polyline
           key={i}
@@ -104,14 +115,14 @@ export function Summary({ nodes }: { nodes: Node[] }) {
         <Flow
           down={bytes(sum((n) => n.day_rx))}
           up={bytes(sum((n) => n.day_tx))}
-          className="mt-1 text-sm font-semibold"
+          className="mt-1 font-semibold"
         />
         <div className="mt-2 text-xs text-muted-foreground">总流量</div>
-        <Flow down={bytes(sum((n) => n.total_rx))} up={bytes(sum((n) => n.total_tx))} className="mt-0.5 text-sm" />
+        <Flow down={bytes(sum((n) => n.total_rx))} up={bytes(sum((n) => n.total_tx))} className="mt-0.5" />
       </Tile>
 
       <Tile icon={Gauge} label="实时网速">
-        <Flow down={rate(now.rx)} up={rate(now.tx)} className="mt-1 text-sm font-semibold" colored />
+        <Flow down={rate(now.rx)} up={rate(now.tx)} className="mt-1 font-semibold" colored />
         <div className="mt-auto pt-1">
           <Spark
             series={[

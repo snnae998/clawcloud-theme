@@ -48,7 +48,10 @@ export function axisBytes(v: number): string {
 }
 
 export function rate(n: number): string {
-  return `${bytes(n, 1)}/s`
+  // Same 3-significant-digit rule as bytes(): at >= 100 the decimal drops,
+  // so a live rate prints "137 KB/s" instead of "136.8 KB/s" — two characters
+  // narrower, and the Summary tiles stay on one line in the common case.
+  return `${bytes(n)}/s`
 }
 
 export function percent(used: number, total: number): number {
