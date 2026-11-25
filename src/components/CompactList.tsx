@@ -31,7 +31,7 @@ export function CompactList({
 }) {
   const [openId, setOpenId] = useState<number | null>(null)
   return (
-    <div className="divide-y divide-border overflow-hidden rounded-lg border bg-card sm:hidden">
+    <div className="divide-y divide-border/60 overflow-hidden rounded-2xl border border-border/70 bg-card shadow-[0_1px_2px_rgba(0,0,0,0.03),0_6px_16px_-6px_rgba(0,0,0,0.06)] sm:hidden">
       {nodes.map((n) => (
         <CompactRow
           key={n.id}
@@ -76,10 +76,10 @@ function CompactRow({
         type="button"
         aria-expanded={open}
         onClick={onToggle}
-        className="flex w-full items-center gap-2 px-3 py-2.5 text-left transition-colors hover:bg-muted/50"
+        className="flex w-full items-center gap-2 px-3.5 py-3 text-left transition-colors active:bg-muted/60"
       >
         <span
-          className={cn("size-2 shrink-0 rounded-full", node.online ? "bg-online" : "bg-muted-foreground/40")}
+          className={cn("size-2 shrink-0 rounded-full", node.online ? "bg-online shadow-[0_0_0_3px_color-mix(in_oklch,var(--online)_18%,transparent)]" : "bg-muted-foreground/40")}
           aria-hidden
         />
         {node.country ? (
@@ -103,7 +103,7 @@ function CompactRow({
       </button>
 
       {open && (
-        <div className="border-t px-3 pt-3 pb-3">
+        <div className="border-t border-border/60 bg-muted/25 px-3.5 pt-3 pb-3.5">
           <p className="text-xs text-muted-foreground">
             {spec ? spec : "等待首次上报"}
           </p>
@@ -168,7 +168,7 @@ function CompactRow({
           <button
             type="button"
             onClick={onOpen}
-            className="mt-3 text-xs font-medium text-foreground underline underline-offset-2 hover:opacity-80"
+            className="mt-3 flex w-full items-center justify-center rounded-lg border border-border/70 bg-card py-2 text-xs font-medium text-foreground shadow-2xs transition-transform active:scale-[0.99]"
           >
             查看详情 ›
           </button>

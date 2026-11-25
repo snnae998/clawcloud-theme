@@ -86,32 +86,45 @@ function ViewSwitch({ view, onChange, onWarm }: {
   onChange: (v: View) => void
   onWarm?: (v: View) => void
 }) {
-  const renderSet = (views: { key: View; label: string }[], className: string, btnPad: string) => (
-    <div className={`shrink-0 gap-1 ${className}`}>
-      {views.map((v) => (
-        <button
-          key={v.key}
-          type="button"
-          aria-pressed={view === v.key}
-          onClick={() => onChange(v.key)}
-          onPointerEnter={() => onWarm?.(v.key)}
-          onFocus={() => onWarm?.(v.key)}
-          className={`shrink-0 rounded-md ${btnPad} py-1 text-xs whitespace-nowrap transition-colors ${
-            view === v.key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
-          }`}
-        >
-          {v.label}
-        </button>
-      ))}
-    </div>
-  )
   return (
     <>
-      {renderSet(VIEWS, "hidden sm:flex", "px-2.5")}
-      {/* 手机组只在 <640px 显示：左右 padding 收窄 4px/边，三按钮共省
-          约 24px——375px 宽下控制条两端（开关+下拉 / 视图切换）才能同
-          行塞下、整页不横滑；桌面组不动。 */}
-      {renderSet(VIEWS_MOBILE, "flex sm:hidden", "px-1.5")}
+      <div className="hidden shrink-0 gap-1 sm:flex">
+        {VIEWS.map((v) => (
+          <button
+            key={v.key}
+            type="button"
+            aria-pressed={view === v.key}
+            onClick={() => onChange(v.key)}
+            onPointerEnter={() => onWarm?.(v.key)}
+            onFocus={() => onWarm?.(v.key)}
+            className={`shrink-0 rounded-md px-2.5 py-1 text-xs whitespace-nowrap transition-colors ${
+              view === v.key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
+            }`}
+          >
+            {v.label}
+          </button>
+        ))}
+      </div>
+      {/* 手机端 iOS 分段滑块样式；桌面端保持上方不变 */}
+      <div className="flex shrink-0 items-center gap-0.5 rounded-lg border border-border/50 bg-muted/75 p-0.5 sm:hidden">
+        {VIEWS_MOBILE.map((v) => (
+          <button
+            key={v.key}
+            type="button"
+            aria-pressed={view === v.key}
+            onClick={() => onChange(v.key)}
+            onPointerEnter={() => onWarm?.(v.key)}
+            onFocus={() => onWarm?.(v.key)}
+            className={`shrink-0 rounded-md px-2 py-1 text-[11px] whitespace-nowrap transition-all ${
+              view === v.key
+                ? "bg-card font-medium text-foreground shadow-2xs"
+                : "text-muted-foreground"
+            }`}
+          >
+            {v.label}
+          </button>
+        ))}
+      </div>
     </>
   )
 }
@@ -157,7 +170,7 @@ function ProbeFilter({
         value={probe ?? ""}
         onChange={(e) => onChange(e.target.value || null)}
         aria-label="只显示指定运营商的探测"
-        className="rounded-md border border-input bg-background px-1.5 py-1 text-xs text-foreground"
+        className="rounded-md border border-input bg-background px-1.5 py-1 text-xs text-foreground max-sm:h-7 max-sm:rounded-lg max-sm:border-transparent max-sm:bg-muted/70 max-sm:px-2 max-sm:text-[11.5px] max-sm:font-medium"
       >
         <option value="">全部</option>
         {options.map((name) => (
@@ -393,23 +406,28 @@ export default function App() {
   return (
     <div className="min-h-svh">
       {/* 手机上 48px 高（外加灵动岛的安全区），只在手机断点内收窄；桌面仍是原高。 */}
-      <header className="sticky top-0 z-10 border-b bg-background/80 backdrop-blur max-sm:pt-[env(safe-area-inset-top)]">
-        <div className="mx-auto flex max-w-[1400px] items-center gap-3 px-4 py-3 sm:px-6 max-sm:h-12 max-sm:py-0">
+      <header className="sticky top-0 z-10 border-b bg-background/80 backdrop-blur max-sm:border-border/70 max-sm:bg-background/85 max-sm:backdrop-blur-md max-sm:pt-[env(safe-area-inset-top)]">
+        <div className="mx-auto flex max-w-[1400px] items-center gap-3 px-4 py-3 sm:px-6 max-sm:h-12 max-sm:px-3.5 max-sm:py-0">
           {/* The site name is the way back to the list, so a node page needs
               no back button of its own. The brand mark sits beside it, the
               way the mockup shows it: a muted circle, so the colourful cloud
               reads on light and dark headers alike. `public/brand-logo.png`
               is the user's own Clawcloud mark, bundled with the theme. */}
-          <button className="flex items-center gap-2 font-semibold transition-opacity hover:opacity-70" onClick={() => go(null)}>
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-muted/70 ring-1 ring-border">
-              <img src="/brand-logo.png" alt="" className="h-7 w-7" />
+          <button className="flex items-center gap-2 font-semibold transition-opacity hover:opacity-70 max-sm:text-[15px] max-sm:tracking-tight" onClick={() => go(null)}>
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-muted/70 ring-1 ring-border max-sm:h-7 max-sm:w-7">
+              <img src="/brand-logo.png" alt="" className="h-7 w-7 max-sm:h-6 max-sm:w-6" />
             </span>
             {me.site_name || "Monitor"}
           </button>
           <div className="flex-1" />
           {/* The panel is a separate app built into the hub, not part of this
               theme, so this is a navigation rather than a route. */}
-          <Button variant="ghost" size="sm" asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="max-sm:size-8 max-sm:rounded-full max-sm:border max-sm:border-border/70 max-sm:bg-card max-sm:p-0 max-sm:shadow-2xs"
+            asChild
+          >
             <a href="/admin/">
               {/* 手机上只留扳手图标，文字不占宽；桌面仍显示「进入后台」。 */}
               <Wrench /> <span className="max-sm:hidden">{me.authed ? "进入后台" : "登录"}</span>
@@ -418,6 +436,7 @@ export default function App() {
           <Button
             variant="ghost"
             size="icon"
+            className="max-sm:size-8 max-sm:rounded-full max-sm:border max-sm:border-border/70 max-sm:bg-card max-sm:shadow-2xs"
             onClick={cycleTheme}
             title={`切换主题（当前：${THEME_MODE_LABEL[mode]}）`}
           >
@@ -426,7 +445,7 @@ export default function App() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-[1400px] space-y-5 px-4 py-4 sm:px-6">
+      <main className="mx-auto max-w-[1400px] space-y-5 px-4 py-4 sm:px-6 max-sm:space-y-3.5 max-sm:px-3.5 max-sm:pt-3 max-sm:pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
         {error && <p className="text-sm text-destructive">{error}</p>}
 
         {open !== null ? (
@@ -462,7 +481,7 @@ export default function App() {
               {/* ml-auto 而非 justify-between：chip 行换行或过滤器缺席（无国家
                   数据时渲染 null）时，切换控件仍钉在右侧。手机上该组改占满整行、
                   两端对齐：质量开关 + 运营商在左，视图切换在右。 */}
-              <div className="ml-auto flex flex-wrap items-center gap-2 max-sm:ml-0 max-sm:min-w-0 max-sm:w-full max-sm:flex-nowrap max-sm:justify-between">
+              <div className="ml-auto flex flex-wrap items-center gap-2 max-sm:ml-0 max-sm:w-full max-sm:min-w-0 max-sm:flex-nowrap max-sm:justify-between max-sm:rounded-xl max-sm:border max-sm:border-border/70 max-sm:bg-card max-sm:px-2.5 max-sm:py-1.5 max-sm:shadow-2xs">
                 <div className="flex items-center gap-2 max-sm:min-w-0">
                   <QualitySwitch on={qualityOn} onChange={switchQuality} />
                   {qualityOn && <ProbeFilter probe={probe} probes={probeNames} onChange={switchProbe} />}

@@ -215,3 +215,27 @@
 .pulse-globe-beacon {
   animation: pulseSvgGlow 2s ease-in-out infinite;
 }
+
+/* 隐藏横向滚动条（手机端地区胶囊条用），保留流畅触控滚动 */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* 手机端专属（<640px）：拉开画布与卡片明度层次，关闭 iOS 默认点击灰块，不动桌面端 */
+@media (max-width: 639px) {
+  :root {
+    --background: oklch(0.974 0.002 247);
+  }
+  .dark {
+    --background: oklch(0.125 0 0);
+    --card: oklch(0.185 0 0);
+  }
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+}

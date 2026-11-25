@@ -105,7 +105,7 @@ export function NodeCard({
       // OS line below does not wrap, so on a phone the card would grow past its
       // column and scroll the page sideways. The truncate inside only takes effect
       // once the card is allowed to be narrower.
-      className="min-w-0 cursor-pointer gap-0 p-4 transition-colors hover:border-ring"
+      className="min-w-0 cursor-pointer gap-0 p-4 transition-colors hover:border-ring max-sm:rounded-2xl max-sm:border-border/70 max-sm:p-3.5 max-sm:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_6px_16px_-6px_rgba(0,0,0,0.06)] max-sm:transition-transform max-sm:active:scale-[0.985]"
       role="button"
       tabIndex={0}
       onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), onOpen())}
@@ -152,7 +152,7 @@ export function NodeCard({
           the live figures blank beats a stretched card with one line in it. */}
       {deployed(node) ? (
         <>
-          <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-4">
+          <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-4 max-sm:mt-3 max-sm:gap-x-3.5 max-sm:gap-y-3">
             {/* The core count belongs beside the word CPU: it is what the
                 percentage and the load averages are both measured against. */}
             <Meter
@@ -180,7 +180,7 @@ export function NodeCard({
 
           {/* 手机上一行：左实时、右累计。只在手机断点内改排布（max-sm），
               桌面仍是 2×2 网格；第三格的 ml-auto 把累计那组推到右端。 */}
-          <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 border-t pt-4 text-xs max-sm:flex max-sm:flex-nowrap max-sm:items-center max-sm:gap-x-2 max-sm:[&>*]:whitespace-nowrap">
+          <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 border-t pt-4 text-xs max-sm:mt-3 max-sm:flex max-sm:flex-nowrap max-sm:items-center max-sm:gap-x-2 max-sm:rounded-lg max-sm:border-t-0 max-sm:bg-muted/50 max-sm:px-2.5 max-sm:py-1.5 max-sm:text-[11.5px] max-sm:[&>*]:whitespace-nowrap">
             <span className="tnum inline-flex items-center gap-1.5">
               <ArrowDown className="size-3 text-muted-foreground" />
               {m ? rate(m.net_rx) : "—"}
@@ -203,7 +203,7 @@ export function NodeCard({
               question ("how has the line been") than the instantaneous rates
               above. QualitySlot renders nothing when there is nothing to draw,
               so the card keeps its height whether or not probes exist. */}
-          <QualitySlot quality={quality} className="mt-4 border-t pt-4" />
+          <QualitySlot quality={quality} className="mt-4 border-t pt-4 max-sm:mt-2.5 max-sm:border-t-0 max-sm:pt-0" />
         </>
       ) : (
         /* Never connected: nothing to plot, so the card stays short rather than

@@ -24,8 +24,8 @@ function Chip({
       // needs its own hover, and the cursor so the chip reads as interactive.
       className={cn(
         badgeVariants({ variant: active ? "default" : "outline" }),
-        "cursor-pointer transition-colors max-sm:shrink-0",
-        !active && "hover:bg-accent hover:text-accent-foreground",
+        "cursor-pointer transition-colors max-sm:h-7 max-sm:shrink-0 max-sm:rounded-full max-sm:px-2.5 max-sm:text-[11.5px] max-sm:font-medium",
+        !active && "hover:bg-accent hover:text-accent-foreground max-sm:border-border/70 max-sm:bg-card max-sm:shadow-2xs",
       )}
     >
       {children}
@@ -68,7 +68,7 @@ export function CountryFilter({
   // stretch 仍把它算成 466px 宽），必须显式定宽到父宽，溢出才只留在
   // 行内滚动、而不变成整页横滑。
   return (
-    <div className="flex flex-wrap items-center gap-1.5 max-sm:w-full max-sm:min-w-0 max-sm:flex-nowrap max-sm:overflow-x-auto">
+    <div className="flex flex-wrap items-center gap-1.5 max-sm:no-scrollbar max-sm:w-full max-sm:min-w-0 max-sm:flex-nowrap max-sm:overflow-x-auto max-sm:py-0.5">
       <Chip active={selected === null} onClick={() => onChange(null)}>
         全部 {nodes.length}
       </Chip>

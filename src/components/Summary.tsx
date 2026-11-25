@@ -9,8 +9,8 @@ function Tile({ icon: Icon, label, children }: {
   icon: typeof Server; label: string; children: React.ReactNode
 }) {
   return (
-    <Card className="min-w-0 overflow-hidden gap-0 p-2.5 sm:p-3">
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+    <Card className="min-w-0 overflow-hidden gap-0 p-2.5 sm:p-3 max-sm:rounded-2xl max-sm:border-border/70 max-sm:p-3 max-sm:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_4px_12px_-4px_rgba(0,0,0,0.05)]">
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground max-sm:text-[11px] max-sm:font-medium">
         <Icon className="size-3.5 shrink-0" />
         {label}
       </div>
@@ -94,10 +94,10 @@ export function Summary({ nodes }: { nodes: Node[] }) {
   const now = speedHistory.at(-1) ?? { rx: 0, tx: 0 }
 
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 max-sm:gap-2.5 lg:grid-cols-4">
       <Tile icon={Server} label="节点">
         <div className="tnum mt-1 text-xl font-semibold">
-          {online.length} / {nodes.length}
+          {online.length} <span className="max-sm:text-[15px] max-sm:font-medium max-sm:text-muted-foreground">/ {nodes.length}</span>
         </div>
         <div className="mt-auto pt-1 text-xs text-muted-foreground">
           {nodes.length - online.length > 0 ? `${nodes.length - online.length} 个离线` : "全部在线"}
@@ -117,7 +117,7 @@ export function Summary({ nodes }: { nodes: Node[] }) {
           up={bytes(sum((n) => n.day_tx))}
           className="mt-1 font-semibold"
         />
-        <div className="mt-2 text-xs text-muted-foreground">总流量</div>
+        <div className="mt-2 text-xs text-muted-foreground max-sm:mt-1.5 max-sm:border-t max-sm:border-border/50 max-sm:pt-1.5 max-sm:text-[11px]">总流量</div>
         <Flow down={bytes(sum((n) => n.total_rx))} up={bytes(sum((n) => n.total_tx))} className="mt-0.5" />
       </Tile>
 
